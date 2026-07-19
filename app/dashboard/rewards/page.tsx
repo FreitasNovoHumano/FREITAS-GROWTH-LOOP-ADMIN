@@ -1,0 +1,1 @@
+import { PageHeader } from "@/components/dashboard/page-header";import { ResourceTable } from "@/components/dashboard/resource-table";export default function Page(){return <><PageHeader eyebrow="INCENTIVOS" title="Recompensas" description="Histórico imutável de liberações, resgates e regras aplicadas."/><ResourceTable resource="rewards"/></>}

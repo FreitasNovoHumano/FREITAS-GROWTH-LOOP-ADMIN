@@ -1,0 +1,1 @@
+import { PageHeader } from "@/components/dashboard/page-header";import { ResourceTable } from "@/components/dashboard/resource-table";export default function Page(){return <><PageHeader eyebrow="COMUNIDADE" title="Participantes" description="Acompanhe cadastro, progresso e indicações qualificadas de cada pessoa."/><ResourceTable resource="participants"/></>}

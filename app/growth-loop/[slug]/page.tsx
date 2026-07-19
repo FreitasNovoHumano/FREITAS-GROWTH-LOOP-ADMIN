@@ -1,0 +1,1 @@
+import { JoinExperience } from "@/components/public/join-experience";export default async function Page({params,searchParams}:{params:Promise<{slug:string}>;searchParams:Promise<{ref?:string}>}){const {slug}=await params;const {ref}=await searchParams;return <JoinExperience slug={slug} ref={ref}/>}

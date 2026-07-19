@@ -1,0 +1,1 @@
+import { PageHeader } from "@/components/dashboard/page-header";import { ResourceTable } from "@/components/dashboard/resource-table";export default function Page(){return <><PageHeader eyebrow="PROTEÇÃO" title="Central antifraude" description="Revise duplicidades, autorreferências e comportamentos suspeitos."/><ResourceTable resource="fraud"/></>}

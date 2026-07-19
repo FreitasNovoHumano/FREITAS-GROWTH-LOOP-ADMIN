@@ -1,0 +1,522 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ENDED
+  ARCHIVED
+}
+
+enum ParticipantStatus {
+  PENDING
+  ACTIVE
+  BLOCKED
+  UNSUBSCRIBED
+}
+
+enum ReferralStatus {
+  CLICKED
+  REGISTERED
+  VALIDATED
+  QUALIFIED
+  REJECTED
+}
+
+enum RewardGrantStatus {
+  PENDING
+  AVAILABLE
+  CLAIMED
+  REVOKED
+  EXPIRED
+}
+
+enum RewardKind {
+  LINK
+  FILE
+  COUPON
+  CREDIT
+  MANUAL
+}
+
+enum InvitationStatus {
+  SENT
+  OPENED
+  ACCEPTED
+  EXPIRED
+  BOUNCED
+}
+
+enum EmailEventStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  BOUNCED
+  FAILED
+}
+
+enum FraudStatus {
+  OPEN
+  REVIEWING
+  CONFIRMED
+  DISMISSED
+}
+
+enum ConsentType {
+  MARKETING
+  TERMS
+  PRIVACY
+  DATA_PROCESSING
+}
+
+enum EventStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String?
+  email     String   @unique
+  image     String?
+  role      Role     @default(CLIENT)
+  clientId  String?  @db.ObjectId
+  client    Client?  @relation(fields: [clientId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("User")
+}
+
+model Client {
+  id        String               @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String               @unique
+  company   String?
+  users     User[]
+  campaigns GrowthLoopCampaign[]
+  createdAt DateTime             @default(now())
+
+  @@map("Client")
+}
+
+model GrowthLoopCampaign {
+  id                    String                @id @default(auto()) @map("_id") @db.ObjectId
+  clientId              String                @db.ObjectId
+  client                Client                @relation(fields: [clientId], references: [id])
+  name                  String
+  slug                  String
+  description           String?
+  status                CampaignStatus        @default(DRAFT)
+  primaryColor          String                @default("#7c3aed")
+  accentColor           String                @default("#c4b5fd")
+  logoUrl               String?
+  initialRewardTitle    String
+  initialRewardValue    String?
+  milestoneRewardTitle  String
+  milestoneRewardValue  String?
+  qualifiedReferralGoal Int                   @default(3)
+  startsAt              DateTime?
+  endsAt                DateTime?
+  createdById           String                @db.ObjectId
+  page                  CampaignPage?
+  ruleVersions          CampaignRuleVersion[]
+  participants          Participant[]
+  leads                 Lead[]
+  leadCampaigns         LeadCampaign[]
+  rewards               Reward[]
+  invitations           Invitation[]
+  referrals             Referral[]
+  templates             EmailTemplate[]
+  auditLogs             AuditLog[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@unique([clientId, slug])
+  @@index([clientId, status])
+  @@map("GrowthLoopCampaign")
+}
+
+model CampaignPage {
+  id            String             @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId    String             @unique @db.ObjectId
+  campaign      GrowthLoopCampaign @relation(fields: [campaignId], references: [id])
+  headline      String
+  subheadline   String?
+  heroImageUrl  String?
+  body          String?
+  ctaLabel      String             @default("Quero participar")
+  thankYouTitle String             @default("Cadastro concluído!")
+  publishedAt   DateTime?
+  updatedAt     DateTime           @updatedAt
+}
+
+model CampaignRuleVersion {
+  id                    String             @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId            String             @db.ObjectId
+  campaign              GrowthLoopCampaign @relation(fields: [campaignId], references: [id])
+  version               Int
+  qualifiedReferralGoal Int                @default(3)
+  requireEmailVerified  Boolean            @default(true)
+  requireInitialAccess  Boolean            @default(true)
+  blockSelfReferral     Boolean            @default(true)
+  activeFrom            DateTime           @default(now())
+  activeUntil           DateTime?
+  snapshot              Json
+  createdAt             DateTime           @default(now())
+
+  @@unique([campaignId, version])
+}
+
+model Participant {
+  id                      String             @id @default(auto()) @map("_id") @db.ObjectId
+  clientId                String             @db.ObjectId
+  campaignId              String             @db.ObjectId
+  campaign                GrowthLoopCampaign @relation(fields: [campaignId], references: [id])
+  name                    String
+  email                   String
+  normalizedEmail         String
+  phone                   String?
+  normalizedPhone         String?
+  referralCode            String             @unique
+  accessTokenHash         String
+  status                  ParticipantStatus  @default(PENDING)
+  emailVerifiedAt         DateTime?
+  registrationCompletedAt DateTime?
+  initialRewardAccessedAt DateTime?
+  qualifiedReferralCount  Int                @default(0)
+  invitationsSent         Invitation[]       @relation("Inviter")
+  referredBy              Referral?          @relation("ReferredParticipant")
+  referrals               Referral[]         @relation("ReferrerParticipant")
+  grants                  RewardGrant[]
+  claims                  RewardClaim[]
+  consents                Consent[]
+  fraudCases              FraudCase[]
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+
+  @@unique([campaignId, normalizedEmail])
+  @@unique([id, accessTokenHash])
+  @@index([clientId, campaignId, status])
+}
+
+model Lead {
+  id                  String             @id @default(auto()) @map("_id") @db.ObjectId
+  clientId            String             @db.ObjectId
+  campaignId          String             @db.ObjectId
+  campaign            GrowthLoopCampaign @relation(fields: [campaignId], references: [id])
+  participantId       String?            @db.ObjectId
+  slug                String?
+  name                String
+  email               String
+  normalizedEmail     String
+  phone               String?
+  source              String             @default("referral")
+  utmSource           String?
+  utmMedium           String?
+  utmCampaign         String?
+  convertedAt         DateTime?
+  campaignMemberships LeadCampaign[]     @relation("RegisteredLead")
+  invitedMemberships  LeadCampaign[]     @relation("InvitingLead")
+  createdAt           DateTime           @default(now())
+
+  @@unique([campaignId, normalizedEmail])
+  @@index([campaignId, slug])
+  @@index([clientId, createdAt])
+}
+
+model LeadCampaign {
+  id                       String             @id @default(auto()) @map("_id") @db.ObjectId
+  clientId                 String             @db.ObjectId
+  campaignId               String             @db.ObjectId
+  campaign                 GrowthLoopCampaign @relation(fields: [campaignId], references: [id])
+  leadId                   String             @db.ObjectId
+  lead                     Lead               @relation("RegisteredLead", fields: [leadId], references: [id])
+  invitedByLeadId          String?            @db.ObjectId
+  invitedByLead            Lead?              @relation("InvitingLead", fields: [invitedByLeadId], references: [id])
+  firstRewardClaimedAt     DateTime?
+  firstRewardLastClaimedAt DateTime?
+  firstRewardClaimCount    Int                @default(0)
+  secondRewardSent         Boolean            @default(false)
+  secondRewardSendingAt    DateTime?
+  secondRewardSentAt       DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  @@unique([campaignId, leadId])
+  @@index([campaignId, invitedByLeadId, firstRewardClaimedAt])
+  @@index([clientId, createdAt])
+  @@map("LeadCampaign")
+}
+
+model Invitation {
+  id              String             @id @default(auto()) @map("_id") @db.ObjectId
+  clientId        String             @db.ObjectId
+  campaignId      String             @db.ObjectId
+  campaign        GrowthLoopCampaign @relation(fields: [campaignId], references: [id])
+  inviterId       String             @db.ObjectId
+  inviter         Participant        @relation("Inviter", fields: [inviterId], references: [id])
+  inviteeEmail    String
+  normalizedEmail String
+  tokenHash       String             @unique
+  status          InvitationStatus   @default(SENT)
+  expiresAt       DateTime
+  openedAt        DateTime?
+  acceptedAt      DateTime?
+  referral        Referral?
+  createdAt       DateTime           @default(now())
+
+  @@unique([campaignId, inviterId, normalizedEmail])
+}
+
+model Referral {
+  id                    String             @id @default(auto()) @map("_id") @db.ObjectId
+  clientId              String             @db.ObjectId
+  campaignId            String             @db.ObjectId
+  campaign              GrowthLoopCampaign @relation(fields: [campaignId], references: [id])
+  invitationId          String?            @unique @db.ObjectId
+  invitation            Invitation?        @relation(fields: [invitationId], references: [id])
+  referrerParticipantId String             @db.ObjectId
+  referrer              Participant        @relation("ReferrerParticipant", fields: [referrerParticipantId], references: [id])
+  referredParticipantId String?            @unique @db.ObjectId
+  referred              Participant?       @relation("ReferredParticipant", fields: [referredParticipantId], references: [id])
+  status                ReferralStatus     @default(CLICKED)
+  attributionKey        String             @unique
+  clickedAt             DateTime           @default(now())
+  registeredAt          DateTime?
+  validatedAt           DateTime?
+  qualifiedAt           DateTime?
+  rejectedReason        String?
+  ruleVersion           Int
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([campaignId, referrerParticipantId, status])
+}
+
+model Reward {
+  id           String              @id @default(auto()) @map("_id") @db.ObjectId
+  clientId     String              @db.ObjectId
+  campaignId   String              @db.ObjectId
+  campaign     GrowthLoopCampaign  @relation(fields: [campaignId], references: [id])
+  key          String
+  title        String
+  description  String?
+  kind         RewardKind
+  value        String?
+  claimUrl     String?
+  active       Boolean             @default(true)
+  ruleVersions RewardRuleVersion[]
+  grants       RewardGrant[]
+  createdAt    DateTime            @default(now())
+
+  @@unique([campaignId, key])
+}
+
+model RewardRuleVersion {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  rewardId       String        @db.ObjectId
+  reward         Reward        @relation(fields: [rewardId], references: [id])
+  version        Int
+  milestone      String
+  threshold      Int           @default(0)
+  snapshot       Json
+  grants         RewardGrant[]
+  effectiveFrom  DateTime      @default(now())
+  effectiveUntil DateTime?
+
+  @@unique([rewardId, version])
+}
+
+model RewardGrant {
+  id             String            @id @default(auto()) @map("_id") @db.ObjectId
+  clientId       String            @db.ObjectId
+  campaignId     String            @db.ObjectId
+  participantId  String            @db.ObjectId
+  participant    Participant       @relation(fields: [participantId], references: [id])
+  rewardId       String            @db.ObjectId
+  reward         Reward            @relation(fields: [rewardId], references: [id])
+  ruleVersionId  String            @db.ObjectId
+  ruleVersion    RewardRuleVersion @relation(fields: [ruleVersionId], references: [id])
+  milestone      String
+  idempotencyKey String            @unique
+  status         RewardGrantStatus @default(AVAILABLE)
+  grantedAt      DateTime          @default(now())
+  expiresAt      DateTime?
+  claims         RewardClaim[]
+
+  @@unique([participantId, rewardId, ruleVersionId, milestone])
+  @@index([clientId, campaignId, status])
+}
+
+model RewardClaim {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  grantId        String      @db.ObjectId
+  grant          RewardGrant @relation(fields: [grantId], references: [id])
+  participantId  String      @db.ObjectId
+  participant    Participant @relation(fields: [participantId], references: [id])
+  idempotencyKey String      @unique
+  claimedAt      DateTime    @default(now())
+  metadata       Json?
+}
+
+model EmailTemplate {
+  id         String              @id @default(auto()) @map("_id") @db.ObjectId
+  clientId   String              @db.ObjectId
+  campaignId String?             @db.ObjectId
+  campaign   GrowthLoopCampaign? @relation(fields: [campaignId], references: [id])
+  key        String
+  name       String
+  subject    String
+  html       String
+  active     Boolean             @default(true)
+  events     EmailEvent[]
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@unique([clientId, campaignId, key])
+}
+
+model EmailEvent {
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  clientId      String           @db.ObjectId
+  templateId    String?          @db.ObjectId
+  template      EmailTemplate?   @relation(fields: [templateId], references: [id])
+  recipientHash String
+  providerId    String?
+  eventType     String
+  status        EmailEventStatus @default(QUEUED)
+  error         String?
+  occurredAt    DateTime         @default(now())
+}
+
+model Integration {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  clientId        String   @db.ObjectId
+  provider        String
+  name            String
+  encryptedConfig String
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([clientId, provider, name])
+}
+
+model WebhookEndpoint {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  clientId        String            @db.ObjectId
+  url             String
+  encryptedSecret String
+  events          String[]
+  active          Boolean           @default(true)
+  deliveries      WebhookDelivery[]
+  createdAt       DateTime          @default(now())
+}
+
+model WebhookDelivery {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  endpointId  String          @db.ObjectId
+  endpoint    WebhookEndpoint @relation(fields: [endpointId], references: [id])
+  eventId     String
+  statusCode  Int?
+  attempts    Int             @default(0)
+  deliveredAt DateTime?
+  nextRetryAt DateTime?
+  error       String?
+  createdAt   DateTime        @default(now())
+
+  @@unique([endpointId, eventId])
+}
+
+model Consent {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  clientId      String      @db.ObjectId
+  participantId String      @db.ObjectId
+  participant   Participant @relation(fields: [participantId], references: [id])
+  type          ConsentType
+  policyVersion String
+  granted       Boolean
+  ipHash        String?
+  userAgentHash String?
+  occurredAt    DateTime    @default(now())
+
+  @@index([clientId, participantId])
+}
+
+model AuditLog {
+  id         String              @id @default(auto()) @map("_id") @db.ObjectId
+  clientId   String              @db.ObjectId
+  campaignId String?             @db.ObjectId
+  campaign   GrowthLoopCampaign? @relation(fields: [campaignId], references: [id])
+  actorId    String?
+  actorType  String
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  occurredAt DateTime            @default(now())
+
+  @@index([clientId, occurredAt])
+}
+
+model FraudCase {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  clientId      String       @db.ObjectId
+  campaignId    String       @db.ObjectId
+  participantId String?      @db.ObjectId
+  participant   Participant? @relation(fields: [participantId], references: [id])
+  referralId    String?      @db.ObjectId
+  reason        String
+  score         Int          @default(0)
+  status        FraudStatus  @default(OPEN)
+  signals       Json
+  resolvedById  String?
+  resolvedAt    DateTime?
+  createdAt     DateTime     @default(now())
+
+  @@index([clientId, status, score])
+}
+
+model DomainEvent {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  clientId       String      @db.ObjectId
+  aggregateType  String
+  aggregateId    String
+  eventType      String
+  idempotencyKey String      @unique
+  payload        Json
+  status         EventStatus @default(PENDING)
+  attempts       Int         @default(0)
+  availableAt    DateTime    @default(now())
+  processedAt    DateTime?
+  lastError      String?
+  createdAt      DateTime    @default(now())
+
+  @@index([status, availableAt])
+}
+
+model RateLimitBucket {
+  id        String   @id @map("_id")
+  count     Int      @default(1)
+  resetAt   DateTime
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("GrowthLoopRateLimitBucket")
+}

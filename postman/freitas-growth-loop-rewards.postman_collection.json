@@ -1,0 +1,175 @@
+{
+  "info": {
+    "_postman_id": "6b66cb52-8ff3-48c0-a329-8f7283991ba1",
+    "name": "Freitas Growth Loop - Cadastro e recompensas",
+    "description": "Testa cadastro por slug, associação LeadCampaign, recompensa por slugs e remoção dos endpoints antigos. Execute o projeto com npm run dev para disponibilizar também o SMTP local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001" },
+    { "key": "campaignSlug", "value": "programa-indique-e-cresca" },
+    { "key": "inviterLeadSlug", "value": "" },
+    { "key": "inviteeLeadSlug", "value": "" },
+    { "key": "testRun", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('testRun')) {",
+          "  pm.collectionVariables.set('testRun', Date.now().toString());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Consultar campanha por slug",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["pm.test('Campanha encontrada', () => pm.response.to.have.status(200));"] }
+      }]
+    },
+    {
+      "name": "2. Registrar lead indicador",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Indicador Postman\",\n  \"email\": \"indicador+{{testRun}}@example.com\",\n  \"phone\": \"+55 11 99999-1001\",\n  \"consent\": true\n}"
+        },
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/register"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('Indicador registrado', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+          "const body = pm.response.json();",
+          "pm.expect(body.lead.slug).to.be.a('string').and.not.empty;",
+          "pm.collectionVariables.set('inviterLeadSlug', body.lead.slug);"
+        ] }
+      }]
+    },
+    {
+      "name": "3. Registrar convidado pelo slug do indicador",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Convidado Postman\",\n  \"email\": \"convidado+{{testRun}}@example.com\",\n  \"phone\": \"+55 11 99999-1002\",\n  \"consent\": true,\n  \"invited_by_lead_slug\": \"{{inviterLeadSlug}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/register"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('Convidado registrado', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+          "const body = pm.response.json();",
+          "pm.expect(body.lead.invited_by_lead_id).to.be.a('string');",
+          "pm.collectionVariables.set('inviteeLeadSlug', body.lead.slug);"
+        ] }
+      }]
+    },
+    {
+      "name": "4. Registrar lead com indicador inválido",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sem Indicador Postman\",\n  \"email\": \"sem-indicador+{{testRun}}@example.com\",\n  \"phone\": \"+55 11 99999-1003\",\n  \"consent\": true,\n  \"invited_by_lead_slug\": \"slug-valido-mas-inexistente-123456\"\n}"
+        },
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/register"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('Cadastro ignora indicador inexistente', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+          "pm.expect(pm.response.json().lead.invited_by_lead_id).to.eql(null);"
+        ] }
+      }]
+    },
+    {
+      "name": "5. Reclamar primeira recompensa",
+      "protocolProfileBehavior": { "followRedirects": false },
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/leads/{{inviteeLeadSlug}}/reward"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": [
+          "pm.test('Redireciona para a primeira recompensa', () => pm.response.to.have.status(303));",
+          "pm.expect(pm.response.headers.get('Location')).to.be.a('string').and.not.empty;"
+        ] }
+      }]
+    },
+    {
+      "name": "6. Reclamar recompensa novamente",
+      "protocolProfileBehavior": { "followRedirects": false },
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/leads/{{inviteeLeadSlug}}/reward"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["pm.test('Permite acessos repetidos', () => pm.response.to.have.status(303));"] }
+      }]
+    },
+    {
+      "name": "7. Campanha inexistente retorna 404",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/campanha-inexistente/leads/slug-inexistente-123456/reward"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["pm.test('Campanha 404', () => pm.response.to.have.status(404));"] }
+      }]
+    },
+    {
+      "name": "8. Lead inexistente retorna 404",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/leads/slug-inexistente-123456/reward"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["pm.test('Lead 404', () => pm.response.to.have.status(404));"] }
+      }]
+    },
+    {
+      "name": "9. Endpoint de convite removido",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/invite"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["pm.test('Convite removido', () => pm.response.to.have.status(404));"] }
+      }]
+    },
+    {
+      "name": "10. Endpoint de aceite removido",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/growth-loop/campaigns/{{campaignSlug}}/leads/{{inviteeLeadSlug}}/accept-invite"
+      },
+      "event": [{
+        "listen": "test",
+        "script": { "exec": ["pm.test('Aceite removido', () => pm.response.to.have.status(404));"] }
+      }]
+    }
+  ]
+}

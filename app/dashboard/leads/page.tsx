@@ -1,0 +1,1 @@
+import { PageHeader } from "@/components/dashboard/page-header";import { ResourceTable } from "@/components/dashboard/resource-table";export default function Page(){return <><PageHeader eyebrow="RELACIONAMENTO" title="Leads" description="Todos os contatos gerados pelas suas campanhas, com exportação auditada."/><ResourceTable resource="leads"/></>}

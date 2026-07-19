@@ -1,0 +1,2 @@
+import Link from "next/link"; import { Plus } from "lucide-react"; import { PageHeader } from "@/components/dashboard/page-header"; import { CampaignManager } from "@/components/campaigns/campaign-manager";
+export default function CampaignsPage(){return <><PageHeader eyebrow="AQUISIÇÃO" title="Campanhas" description="Crie experiências de indicação que seus clientes vão querer compartilhar." action={<Link className="button primary" href="/dashboard/campaigns/new"><Plus size={18}/> Nova campanha</Link>}/><CampaignManager/></>}
