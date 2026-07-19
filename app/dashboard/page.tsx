@@ -1,18 +1,6 @@
 import Link from "next/link";
-import { Target } from "lucide-react";
+import { ArrowUpRight, Gift, MousePointerClick, Target, UserRoundPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { DashboardOverview } from "@/components/dashboard/admin-overview";
 
-export default function DashboardPage() {
-  return (
-    <>
-      <PageHeader
-        eyebrow="PAINEL DE CRESCIMENTO"
-        title="Visão geral do Growth Loop"
-        description="Acompanhe os dados consolidados e confirmados das suas campanhas."
-        action={<Link href="/dashboard/campaigns/new" className="button primary"><Target size={18} /> Nova campanha</Link>}
-      />
-      <DashboardOverview />
-    </>
-  );
-}
+const metrics = [["Leads capturados", "1.284", "+18,4%", UserRoundPlus], ["Participantes", "842", "+12,7%", Users], ["Indicações qualificadas", "376", "+24,1%", MousePointerClick], ["Recompensas liberadas", "129", "+8,6%", Gift]] as const;
+export default function DashboardPage() { return <><PageHeader eyebrow="PAINEL DE CRESCIMENTO" title="Seu loop está ganhando força." description="Acompanhe o desempenho das suas campanhas e descubra onde acelerar." action={<Link href="/dashboard/campaigns/new" className="button primary"><Target size={18}/> Nova campanha</Link>}/><section className="metric-grid">{metrics.map(([label, value, change, Icon]) => <article className="metric-card" key={label}><div><span className="metric-icon"><Icon/></span><span className="positive">{change}</span></div><strong>{value}</strong><p>{label}</p></article>)}</section><section className="dashboard-grid"><article className="panel chart-panel"><div className="panel-head"><div><h2>Conversões do loop</h2><p>Últimos 30 dias</p></div><select aria-label="Período"><option>30 dias</option></select></div><div className="fake-chart"><span style={{height:"32%"}}/><span style={{height:"49%"}}/><span style={{height:"42%"}}/><span style={{height:"65%"}}/><span style={{height:"58%"}}/><span style={{height:"83%"}}/><span style={{height:"74%"}}/><span style={{height:"92%"}}/></div><div className="chart-labels"><span>Cadastros</span><span>Indicações</span><span>Qualificados</span></div></article><article className="panel loop-card"><span className="orbit-large"><span>3</span><small>indicações</small></span><h2>Meta mais comum</h2><p>62% dos participantes ativos já fizeram ao menos uma indicação.</p><Link href="/dashboard/participants">Ver participantes <ArrowUpRight size={16}/></Link></article></section><section className="panel"><div className="panel-head"><div><h2>Campanhas em destaque</h2><p>Performance das campanhas ativas</p></div><Link href="/dashboard/campaigns">Ver todas</Link></div><div className="campaign-row"><span className="campaign-symbol purple">IN</span><span><strong>Indique & Ganhe — Julho</strong><small>Ativa · 623 participantes</small></span><span><strong>31,8%</strong><small>conversão</small></span><span><strong>186</strong><small>qualificados</small></span><span className="status active">Ativa</span></div><div className="campaign-row"><span className="campaign-symbol coral">VIP</span><span><strong>Clube de Embaixadores</strong><small>Ativa · 219 participantes</small></span><span><strong>27,2%</strong><small>conversão</small></span><span><strong>74</strong><small>qualificados</small></span><span className="status active">Ativa</span></div></section></>; }

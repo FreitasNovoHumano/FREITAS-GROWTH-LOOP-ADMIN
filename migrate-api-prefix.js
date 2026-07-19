@@ -1,8 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+const fs = require("fs");
+const path = require("path");
 
-const PROJECT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
+const PROJECT_DIRECTORY = path.resolve(__dirname);
 
 const OLD_VALUE = "/api/admin";
 const NEW_VALUE = "/api/v1";

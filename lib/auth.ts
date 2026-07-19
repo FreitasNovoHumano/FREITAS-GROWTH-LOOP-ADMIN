@@ -17,23 +17,16 @@ export const authOptions: NextAuthOptions = {
   })],
   callbacks: {
     async jwt({ token, user }) {
-      const email = (user?.email ?? token.email)?.trim().toLowerCase();
+      const email = user?.email ?? token.email;
       if (!email) return token;
-      const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-      const expectedRole = adminEmail && email === adminEmail ? "ADMIN" : "CLIENT";
       let dbUser = await prisma.user.findUnique({ where: { email } });
       if (!dbUser) {
         dbUser = await prisma.user.create({ data: {
           email,
           name: user?.name ?? token.name ?? email,
           image: user?.image ?? token.picture ?? null,
-          role: expectedRole,
+          role: email === process.env.ADMIN_EMAIL ? "ADMIN" : "CLIENT",
         }});
-      } else if (dbUser.role !== expectedRole) {
-        dbUser = await prisma.user.update({
-          where: { id: dbUser.id },
-          data: { role: expectedRole },
-        });
       }
       if (dbUser.role === "CLIENT" && !dbUser.clientId) {
         const client = await prisma.client.findUnique({ where: { email } });

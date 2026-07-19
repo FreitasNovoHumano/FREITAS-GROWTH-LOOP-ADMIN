@@ -1,15 +1,2 @@
-import { PageHeader } from "@/components/dashboard/page-header";
-import { ReportsOverview } from "@/components/dashboard/admin-overview";
-
-export default function ReportsPage() {
-  return (
-    <>
-      <PageHeader
-        eyebrow="INTELIGÊNCIA"
-        title="Relatórios"
-        description="Consulte os indicadores que já são calculados pelo backend, sem estimativas."
-      />
-      <ReportsOverview />
-    </>
-  );
-}
+import { PageHeader } from "@/components/dashboard/page-header";import { ArrowDown, ArrowRight, CheckCircle2, MousePointerClick, UserPlus, Users } from "lucide-react";
+export default function Page(){const steps=[["Visitantes","4.036","100%",MousePointerClick],["Cadastros","1.284","31,8%",UserPlus],["Compartilharam","842","65,6%",Users],["Qualificados","376","44,7%",CheckCircle2]] as const;return <><PageHeader eyebrow="INTELIGÊNCIA" title="Relatórios" description="Entenda o funil completo e encontre os pontos de maior alavancagem."/><section className="panel funnel"><h2>Funil de indicação</h2><p>Consolidado dos últimos 30 dias</p><div>{steps.map(([label,value,rate,Icon],i)=><span key={label} style={{width:`${100-i*14}%`}}><Icon/><strong>{value}</strong><small>{label} · {rate}</small>{i<steps.length-1&&<ArrowDown className="funnel-arrow"/>}</span>)}</div></section><section className="insight-grid"><article className="panel"><span className="eyebrow">INSIGHT</span><h2>Seu maior ponto de alavancagem</h2><p>Participantes que acessam a primeira recompensa indicam 2,4× mais amigos. Reforce esse momento nos e-mails.</p><button className="text-button">Ver automação <ArrowRight/></button></article><article className="panel"><span className="eyebrow">QUALIDADE</span><h2>29,3% dos leads são qualificados</h2><p>A taxa cresceu 6,8 pontos neste mês, com destaque para a campanha Indique & Ganhe.</p></article></section></>}

@@ -1,80 +1,53 @@
-import { getModelByName } from "@adminjs/prisma";
-import prisma from "../config/database.js";
+import { Campaign, Lead, Referral, Reward, User } from "../models/index.js";
+import { USER_ROLES } from "../models/User.js";
+import { hashPassword } from "../services/password.service.js";
 
-const resource = (modelName, options = {}) => ({
-  resource: { model: getModelByName(modelName), client: prisma },
-  options,
-});
+const isAdmin = ({ currentAdmin }) => currentAdmin?.role === USER_ROLES.ADMIN;
+const isAuthenticated = ({ currentAdmin }) => Boolean(currentAdmin);
+
+async function passwordHook(request) {
+  if (request.method !== "post") return request;
+  const password = request.payload?.password;
+  if (password) request.payload.passwordHash = await hashPassword(password);
+  delete request.payload.password;
+  return request;
+}
+
+async function newUserHook(request) {
+  if (request.method === "post" && !request.payload?.password) {
+    throw new Error("A senha e obrigatoria.");
+  }
+  return passwordHook(request);
+}
 
 export const resources = [
-  resource("User", {
-    navigation: { name: "Administração", icon: "User" },
-    listProperties: ["id", "name", "email", "role", "clientId", "createdAt"],
-    editProperties: ["name", "email", "role", "clientId"],
-    properties: {
-      email: { isTitle: true },
-      role: {
-        availableValues: [
-          { value: "ADMIN", label: "Administrador" },
-          { value: "CLIENT", label: "Cliente" },
-        ],
+  {
+    resource: User,
+    options: {
+      navigation: { name: "Administracao", icon: "User" },
+      listProperties: ["id", "name", "email", "role", "active", "createdAt"],
+      editProperties: ["name", "email", "password", "role", "active"],
+      properties: {
+        email: { isTitle: true },
+        passwordHash: { isVisible: false },
+        password: { type: "password", isVisible: { list: false, filter: false, show: false, edit: true } },
+        role: { availableValues: [
+          { value: USER_ROLES.ADMIN, label: "Administrador" },
+          { value: USER_ROLES.EDITOR, label: "Editor" },
+        ] },
+      },
+      actions: {
+        list: { isAccessible: isAuthenticated },
+        show: { isAccessible: isAuthenticated },
+        new: { isAccessible: isAdmin, before: newUserHook },
+        edit: { isAccessible: isAdmin, before: passwordHook },
+        delete: { isAccessible: isAdmin },
+        bulkDelete: { isAccessible: false },
       },
     },
-    actions: { bulkDelete: { isAccessible: false } },
-  }),
-  resource("Client"),
-  resource("GrowthLoopCampaign", {
-    navigation: { name: "Growth Loop", icon: "Bullhorn" },
-    listProperties: ["name", "slug", "status", "qualifiedReferralGoal", "startsAt", "endsAt"],
-    filterProperties: ["name", "slug", "status", "clientId", "startsAt", "endsAt"],
-    showProperties: [
-      "id", "clientId", "name", "slug", "description", "status", "initialRewardTitle",
-      "milestoneRewardTitle", "qualifiedReferralGoal", "startsAt", "endsAt", "createdAt", "updatedAt",
-    ],
-    properties: { name: { isTitle: true } },
-    actions: { delete: { isAccessible: false }, bulkDelete: { isAccessible: false } },
-  }),
-  resource("Participant"),
-  resource("Lead", {
-    navigation: { name: "Growth Loop", icon: "User" },
-    listProperties: ["name", "email", "slug", "campaignId", "source", "convertedAt", "createdAt"],
-    filterProperties: ["name", "email", "slug", "campaignId", "source", "createdAt"],
-    showProperties: [
-      "id", "clientId", "campaignId", "participantId", "slug", "name", "email", "normalizedEmail",
-      "phone", "source", "utmSource", "utmMedium", "utmCampaign", "convertedAt", "createdAt",
-    ],
-    editProperties: ["name", "phone", "source", "utmSource", "utmMedium", "utmCampaign"],
-    properties: { email: { isTitle: true }, slug: { isDisabled: true } },
-    actions: { delete: { isAccessible: false }, bulkDelete: { isAccessible: false } },
-  }),
-  resource("LeadCampaign", {
-    navigation: { name: "Growth Loop", icon: "Link" },
-    listProperties: [
-      "leadId", "campaignId", "invitedByLeadId", "firstRewardClaimCount", "firstRewardClaimedAt",
-      "secondRewardSent", "secondRewardSentAt",
-    ],
-    filterProperties: ["campaignId", "leadId", "invitedByLeadId", "secondRewardSent", "createdAt"],
-    showProperties: [
-      "id", "clientId", "campaignId", "leadId", "invitedByLeadId", "firstRewardClaimedAt",
-      "firstRewardLastClaimedAt", "firstRewardClaimCount", "secondRewardSent", "secondRewardSendingAt",
-      "secondRewardSentAt", "createdAt", "updatedAt",
-    ],
-    editProperties: [],
-    properties: {
-      invitedByLeadId: { label: "Lead indicador" },
-      firstRewardClaimedAt: { label: "1ª recompensa resgatada em" },
-      firstRewardLastClaimedAt: { label: "Último acesso à 1ª recompensa" },
-      firstRewardClaimCount: { label: "Acessos à 1ª recompensa" },
-      secondRewardSent: { label: "2ª recompensa enviada" },
-      secondRewardSentAt: { label: "2ª recompensa enviada em" },
-    },
-    actions: {
-      new: { isAccessible: false },
-      edit: { isAccessible: false },
-      delete: { isAccessible: false },
-      bulkDelete: { isAccessible: false },
-    },
-  }),
-  resource("Referral"),
-  resource("Reward"),
+  },
+  Campaign,
+  Lead,
+  Referral,
+  Reward,
 ];

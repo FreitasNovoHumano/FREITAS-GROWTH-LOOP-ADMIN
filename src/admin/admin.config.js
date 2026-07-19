@@ -1,31 +1,49 @@
 import AdminJS from "adminjs";
 import AdminJSExpress from "@adminjs/express";
-import { Database, Resource } from "@adminjs/prisma";
-import { requireGoogleAdmin } from "./auth.provider.js";
-import { componentLoader, Components } from "./component-loader.js";
-import { dashboardHandler } from "./dashboard/dashboard.handler.js";
+import * as AdminJSSequelize from "@adminjs/sequelize";
+import ConnectPgSimple from "connect-pg-simple";
+import session from "express-session";
+import { env } from "../config/env.js";
+import { authenticate } from "./auth.provider.js";
 import { resources } from "./resources.js";
 
-AdminJS.registerAdapter({ Resource, Database });
+AdminJS.registerAdapter({
+  Resource: AdminJSSequelize.Resource,
+  Database: AdminJSSequelize.Database,
+});
 
 export function createAdmin() {
   return new AdminJS({
     rootPath: "/admin",
     resources,
-    componentLoader,
-    dashboard: {
-      component: Components.GrowthDashboard,
-      handler: dashboardHandler,
-    },
-    branding: {
-      companyName: "FreitasGrowthLoop",
-      logo: "/freitas-loop.png",
-      withMadeWithLove: false,
-    },
+    branding: { companyName: "FreitasGrowthLoop", withMadeWithLove: false },
     locale: { language: "pt-BR", availableLanguages: ["pt-BR", "en"] },
   });
 }
 
 export function createAdminRouter(admin) {
-  return [requireGoogleAdmin, AdminJSExpress.buildRouter(admin)];
+  const PgStore = ConnectPgSimple(session);
+  const store = new PgStore({
+    conObject: {
+      connectionString: env.databaseUrl,
+      ssl: env.databaseSsl ? { rejectUnauthorized: false } : false,
+    },
+    tableName: "admin_sessions",
+    createTableIfMissing: true,
+  });
+
+  return AdminJSExpress.buildAuthenticatedRouter(
+    admin,
+    { authenticate, cookieName: env.cookieName, cookiePassword: env.cookieSecret },
+    null,
+    {
+      store,
+      name: env.cookieName,
+      secret: env.sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+      proxy: env.isProduction,
+      cookie: { httpOnly: true, secure: env.isProduction, sameSite: "lax", maxAge: 28_800_000 },
+    },
+  );
 }
