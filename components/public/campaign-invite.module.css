@@ -1,0 +1,432 @@
+.page {
+  --campaign-color: #7c3aed;
+  position: relative;
+  display: grid;
+  gap: 24px;
+  overflow: hidden;
+  border: 1px solid #27272a;
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 85% 5%, color-mix(in srgb, var(--campaign-color) 30%, transparent), transparent 27%),
+    linear-gradient(145deg, #18111f 0%, #09090b 52%, #050506 100%);
+  color: #fafafa;
+  padding: clamp(24px, 5vw, 56px);
+  box-shadow: 0 35px 80px rgba(24, 11, 42, 0.22);
+}
+
+.hero {
+  max-width: 760px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 52px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.brand img {
+  border-radius: 13px;
+}
+
+.brand b,
+.hero em {
+  color: color-mix(in srgb, var(--campaign-color) 78%, #ffffff);
+  font-style: normal;
+}
+
+.successBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(74, 222, 128, 0.24);
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.hero h1 {
+  max-width: 720px;
+  margin: 20px 0 18px;
+  font-size: clamp(2.5rem, 6vw, 4.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.hero > p {
+  max-width: 620px;
+  margin: 0;
+  color: #a1a1aa;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.7;
+}
+
+.rewardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.card,
+.shareCard,
+.videoCard {
+  border: 1px solid #27272a;
+  border-radius: 24px;
+  background: rgba(9, 9, 11, 0.78);
+  padding: 26px;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+}
+
+.firstReward {
+  border-color: color-mix(in srgb, var(--campaign-color) 46%, #27272a);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--campaign-color) 16%, #09090b), #09090b 65%);
+}
+
+.icon,
+.shareIntro > span {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--campaign-color) 18%, transparent);
+  color: color-mix(in srgb, var(--campaign-color) 72%, #ffffff);
+}
+
+.icon svg,
+.shareIntro svg {
+  width: 21px;
+}
+
+.card small,
+.shareIntro small {
+  color: #a78bfa;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.card h2,
+.shareCard h2 {
+  margin: 7px 0 9px;
+  color: #ffffff;
+  font-size: 1.35rem;
+}
+
+.card strong {
+  display: block;
+  margin-bottom: 9px;
+  color: #d8b4fe;
+}
+
+.card p,
+.shareCard p {
+  margin: 0;
+  color: #a1a1aa;
+  line-height: 1.6;
+}
+
+.primaryButton {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--campaign-color);
+  color: #ffffff;
+  padding: 13px 18px;
+  font-weight: 800;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.primaryButton:hover,
+.shareButton:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.goal {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #27272a;
+  color: #d4d4d8;
+  padding-top: 17px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.goal svg {
+  flex: 0 0 auto;
+  color: #a78bfa;
+}
+
+.goal b {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.shareCard {
+  padding: clamp(24px, 4vw, 36px);
+}
+
+.videoCard {
+  display: grid;
+  gap: 18px;
+  padding: clamp(24px, 4vw, 36px);
+}
+
+.videoCard small {
+  color: #a78bfa;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.videoCard h2 {
+  margin: 7px 0 0;
+  color: #ffffff;
+}
+
+.videoFrame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #3f3f46;
+  border-radius: 18px;
+  background: #000000;
+}
+
+.videoFrame iframe,
+.videoFrame video {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+}
+
+.shareIntro {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 17px;
+}
+
+.linkBox {
+  margin-top: 26px;
+}
+
+.linkBox label {
+  display: block;
+  margin-bottom: 8px;
+  color: #d4d4d8;
+  font-size: 0.76rem;
+}
+
+.linkBox > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border: 1px solid #3f3f46;
+  border-radius: 14px;
+  background: #18181b;
+  padding: 6px;
+}
+
+.linkBox input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #d4d4d8;
+  outline: 0;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+}
+
+.linkBox button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 10px;
+  background: #27272a;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 10px 14px;
+  font-weight: 700;
+}
+
+.linkBox button svg {
+  width: 17px;
+}
+
+.shareActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.shareButton {
+  display: inline-flex;
+  min-height: 46px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 12px 18px;
+  font-weight: 800;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.shareButton {
+  background: var(--campaign-color);
+  color: #ffffff;
+}
+
+.socialGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.socialGrid a,
+.socialGrid button {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #3f3f46;
+  border-radius: 12px;
+  background: #18181b;
+  color: #f4f4f5;
+  cursor: pointer;
+  padding: 11px 10px;
+  font: inherit;
+  font-size: 0.79rem;
+  font-weight: 700;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.socialGrid a:hover,
+.socialGrid button:hover {
+  border-color: color-mix(in srgb, var(--campaign-color) 60%, #3f3f46);
+  background: #27272a;
+  transform: translateY(-1px);
+}
+
+.socialGrid svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.socialGrid b {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.socialGrid .socialMark {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.alert {
+  margin-top: 12px !important;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 10px;
+  background: rgba(127, 29, 29, 0.24);
+  color: #fecaca !important;
+  padding: 11px 13px;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #71717a;
+  font-size: 0.77rem;
+  text-align: center;
+}
+
+.loading,
+.unavailable {
+  min-height: calc(100vh - 180px);
+  place-content: center;
+  text-align: center;
+}
+
+.loading {
+  display: grid;
+  color: var(--muted);
+}
+
+.unavailable {
+  display: grid;
+}
+
+.unavailable span {
+  font-size: 4rem;
+}
+
+.unavailable h1 {
+  margin: 14px 0 8px;
+}
+
+.unavailable p {
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  .page {
+    border-radius: 22px;
+  }
+
+  .brand {
+    margin-bottom: 36px;
+  }
+
+  .rewardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .shareActions {
+    flex-direction: column;
+  }
+
+  .socialGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .linkBox > div {
+    grid-template-columns: 1fr;
+  }
+
+  .linkBox button {
+    justify-content: center;
+  }
+}

@@ -16,6 +16,7 @@ de 10 segundos.
 GET  /api/growth-loop/campaigns/:slug
 POST /api/growth-loop/campaigns/:slug/register
 GET  /api/growth-loop/campaigns/:slug/leads/:leadSlug/reward
+GET  /api/campaigns/:slug/leads/:leadSlug/claim_reward
 ```
 
 O cadastro aceita o contrato atual da landing page:
@@ -60,6 +61,7 @@ POST /api/public/campaigns/:slug/join
 GET  /api/campaigns/:slug
 POST /api/campaigns/:slug/register
 GET  /api/campaigns/:slug/leads/:leadSlug/reward
+GET  /api/campaigns/:slug/leads/:leadSlug/claim_reward
 ```
 
 As duas primeiras são aliases internos do Next.js. As demais são proxies no

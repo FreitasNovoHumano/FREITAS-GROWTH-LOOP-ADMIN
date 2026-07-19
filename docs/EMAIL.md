@@ -71,11 +71,24 @@ o MailDev.
 Nunca versione credenciais reais. Em produção, `SMTP_HOST` é obrigatório e
 `SMTP_USER`/`SMTP_PASS` devem ser configurados em conjunto.
 
+## URL pública usada nos e-mails
+
+Configure a origem pública, sem barra no final:
+
+```dotenv
+BASE_URL=https://freitas-growth-loop-admin.vercel.app
+```
+
+`GROWTH_LOOP_PUBLIC_BASE_URL` continua aceito como fallback para manter
+compatibilidade com ambientes existentes. A URL é usada para montar os links
+de resgate e de indicação enviados ao participante.
+
 ## Endpoints que enviam mensagens
 
 | Evento | Endpoint | Destinatário |
 | --- | --- | --- |
 | Cadastro concluído | `POST /api/growth-loop/campaigns/:slug/register` | participante |
+| Resgate da primeira recompensa | `GET /api/campaigns/:campaignSlug/leads/:leadSlug/claim_reward` | redireciona o participante |
 | Meta atingida | `GET /api/growth-loop/campaigns/:slug/leads/:leadSlug/reward` | participante indicador |
 
 As URLs legadas chamam os mesmos handlers e, portanto, não geram uma segunda
@@ -96,7 +109,9 @@ Variáveis disponíveis nos corpos HTML incluem:
 {{rewardTitle}}
 {{rewardValue}}
 {{rewardUrl}}
+{{inviteUrl}}
 {{qualifiedReferralGoal}}
+{{secondRewardTitle}}
 ```
 
 Valores interpolados são escapados antes de entrar no HTML.

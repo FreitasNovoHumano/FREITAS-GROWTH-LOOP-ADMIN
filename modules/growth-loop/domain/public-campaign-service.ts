@@ -12,6 +12,9 @@ import {
 } from "@/lib/security";
 import { grantReward } from "./reward-service";
 import { participantSchema } from "../schemas/participant";
+import { PRODUCTION_APP_ORIGIN } from "@/lib/app-url";
+import { buildFirstRewardEmail } from "../email-templates/first-reward-email";
+import { renderEmailTemplate } from "../email-templates/template-utils";
 
 const emailSchema = z.string().trim().email("E-mail inválido").transform(normalizeEmail);
 const leadSlugSchema = z.string().trim().min(16).max(128).regex(/^[A-Za-z0-9_-]+$/, "Slug de lead inválido");
@@ -34,9 +37,10 @@ export class PublicCampaignError extends Error {
 }
 
 function publicBaseUrl() {
-  return (process.env.GROWTH_LOOP_PUBLIC_BASE_URL
+  return (process.env.BASE_URL
+    ?? process.env.GROWTH_LOOP_PUBLIC_BASE_URL
     ?? process.env.NEXT_PUBLIC_APP_URL
-    ?? "http://localhost:3001").replace(/\/$/, "");
+    ?? PRODUCTION_APP_ORIGIN).replace(/\/$/, "");
 }
 
 function templateUrl(campaignSlug: string) {
@@ -61,12 +65,6 @@ function emailTemplate(
   ...keys: string[]
 ) {
   return campaign.templates.find((item) => keys.includes(item.key));
-}
-
-function renderEmailTemplate(source: string, variables: Record<string, string>) {
-  return source.replace(/\{\{\s*([a-zA-Z][\w]*)\s*\}\}/g, (_match, key: string) => {
-    return escapeHtml(variables[key] ?? "");
-  });
 }
 
 async function sendCampaignEmail(input: Parameters<typeof sendTransactionalEmail>[0]) {
@@ -101,6 +99,7 @@ export async function getPublicCampaign(slug: string) {
     milestoneRewardTitle: campaign.milestoneRewardTitle,
     milestoneRewardValue: campaign.milestoneRewardValue,
     qualifiedReferralGoal: campaign.qualifiedReferralGoal,
+    required_leads_for_second_reward: campaign.qualifiedReferralGoal,
     page: campaign.page,
     available_at: campaign.startsAt ?? campaign.createdAt,
     user_id: campaign.createdById,
@@ -331,20 +330,22 @@ export async function registerForCampaign(
   }
   const firstEmail = emailTemplate(campaign, "FIRST_REWARD", "INITIAL_REWARD");
   if (!result.lead.slug) throw new PublicCampaignError("Lead sem slug para acesso à recompensa.", 500);
-  const rewardUrl = `${publicBaseUrl()}/api/growth-loop/campaigns/${encodeURIComponent(campaign.slug)}/leads/${encodeURIComponent(result.lead.slug)}/reward`;
-  const firstEmailVariables = {
+  const rewardUrl = `${publicBaseUrl()}/api/campaigns/${encodeURIComponent(campaign.slug)}/leads/${encodeURIComponent(result.lead.slug)}/claim_reward`;
+  const inviteUrl = `${publicBaseUrl()}/c/${encodeURIComponent(campaign.slug)}?invited_by_lead_slug=${encodeURIComponent(result.lead.slug)}`;
+  const rewardEmail = buildFirstRewardEmail({
     participantName: input.name,
     campaignName: campaign.name,
     rewardTitle: campaign.initialRewardTitle,
     rewardValue: campaign.initialRewardValue ?? "",
     rewardUrl,
-  };
+    inviteUrl,
+    qualifiedReferralGoal: campaign.qualifiedReferralGoal,
+    secondRewardTitle: campaign.milestoneRewardTitle,
+    customTemplate: firstEmail,
+  });
   await sendCampaignEmail({
     to: input.email,
-    subject: firstEmail?.subject ?? `Seu bônus: ${campaign.initialRewardTitle}`,
-    html: firstEmail?.html
-      ? renderEmailTemplate(firstEmail.html, firstEmailVariables)
-      : `<h1>${escapeHtml(campaign.initialRewardTitle)}</h1><p>${escapeHtml(campaign.initialRewardValue)}</p><p><a href="${escapeHtml(rewardUrl)}">Acessar bônus</a></p>`,
+    ...rewardEmail,
   });
   return {
     success: true,

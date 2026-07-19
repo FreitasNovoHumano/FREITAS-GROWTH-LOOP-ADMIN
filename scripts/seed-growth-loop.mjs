@@ -113,7 +113,7 @@ async function upsertCampaign(definition, campaignIndex, owner) {
         description: `Benefício da campanha ${definition.name}.`,
         kind: "LINK",
         value: rewardDefinition.value,
-        claimUrl: `http://localhost:3001/growth-loop/${definition.slug}`,
+        claimUrl: `https://freitas-growth-loop-admin.vercel.app/c/${definition.slug}`,
         active: true,
       },
       update: { title: rewardDefinition.title, value: rewardDefinition.value, active: true },

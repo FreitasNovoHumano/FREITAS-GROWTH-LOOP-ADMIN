@@ -2,10 +2,14 @@
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { productionAppUrl } from "@/lib/app-url";
 
 export default function LoginPage() {
   function handleGoogleSignIn() {
-    const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl") ?? "/dashboard";
+    const requestedPath = new URLSearchParams(window.location.search).get("callbackUrl");
+    const callbackUrl = requestedPath?.startsWith("/")
+      ? productionAppUrl(requestedPath)
+      : productionAppUrl("/dashboard");
     void signIn("google", { callbackUrl });
   }
 

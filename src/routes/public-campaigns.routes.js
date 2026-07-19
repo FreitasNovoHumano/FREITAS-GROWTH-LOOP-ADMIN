@@ -27,5 +27,6 @@ router.use(publicLimiter);
 router.get("/:slug", getPublicCampaign);
 router.post("/:slug/register", writeLimiter, registerLead);
 router.get("/:slug/leads/:lead_slug/reward", claimReward);
+router.get("/:slug/leads/:lead_slug/claim_reward", claimReward);
 
 export default router;

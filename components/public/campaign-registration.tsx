@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { productionAppUrl } from "@/lib/app-url";
 import styles from "./campaign-registration.module.css";
 
 type Campaign = {
@@ -133,7 +134,7 @@ export function CampaignRegistration({
       if (!response.ok) throw new Error(apiErrorMessage(response, body));
       if (!body.lead?.slug) throw new Error("A API não retornou o slug do lead cadastrado.");
 
-      router.push(`/c/${encodeURIComponent(slug)}/invite?lead_slug=${encodeURIComponent(body.lead.slug)}`);
+      router.push(productionAppUrl(`/c/${encodeURIComponent(slug)}/invite?lead_slug=${encodeURIComponent(body.lead.slug)}`));
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Não foi possível concluir o cadastro.");
     } finally {
