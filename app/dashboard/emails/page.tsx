@@ -1,1 +1,15 @@
-import { PageHeader } from "@/components/dashboard/page-header";import { Mail, Pencil, Send } from "lucide-react";const templates=[["Boas-vindas e recompensa inicial","Enviado após o cadastro","Participante cadastrado"],["Convite de indicação","Enviado ao amigo convidado","Convite criado"],["Progresso do participante","Celebra cada indicação qualificada","Indicação qualificada"],["Recompensa desbloqueada","Confirma o marco de três indicações","Meta atingida"]];export default function Page(){return <><PageHeader eyebrow="AUTOMAÇÕES" title="E-mails" description="Mensagens consistentes em cada momento do loop." action={<button className="button primary"><Send size={17}/> Configurar provedor</button>}/><section className="template-grid">{templates.map(([title,desc,event])=><article className="panel template-card" key={title}><span className="template-icon"><Mail/></span><h2>{title}</h2><p>{desc}</p><small>GATILHO</small><strong>{event}</strong><button><Pencil size={16}/> Editar template</button></article>)}</section></>}
+import { Mail, Variable } from "lucide-react";
+import { PageHeader } from "@/components/dashboard/page-header";
+
+const templates = [
+  { title: "Primeira recompensa", keys: "FIRST_REWARD / INITIAL_REWARD", trigger: "Cadastro concluído", variables: "participantName, campaignName, rewardTitle, rewardValue, rewardUrl, inviteUrl, qualifiedReferralGoal, secondRewardTitle" },
+  { title: "Segunda recompensa", keys: "SECOND_REWARD / MILESTONE_REWARD", trigger: "Meta de indicações qualificadas", variables: "participantName, campaignName, rewardTitle, rewardValue, rewardUrl, qualifiedReferralGoal" },
+] as const;
+
+export default function EmailsPage() {
+  return <>
+    <PageHeader eyebrow="AUTOMAÇÕES" title="E-mails" description="Templates reconhecidos atualmente pelo fluxo transacional."/>
+    <div className="notice-card" role="note"><Mail/><div><strong>Envio ativo pelo transporte SMTP do servidor</strong><p>A edição e o envio de teste pelo painel dependem de uma API administrativa que ainda não existe. Nenhuma credencial é exposta nesta tela.</p></div></div>
+    <section className="template-grid email-template-grid">{templates.map((template) => <article className="panel template-card" key={template.title}><span className="template-icon"><Mail/></span><h2>{template.title}</h2><p>{template.trigger}</p><small>CHAVES SUPORTADAS</small><strong>{template.keys}</strong><span className="template-vars"><Variable size={15}/>{template.variables}</span><button disabled title="Disponível após integração da API de templates">Editar template · indisponível</button></article>)}</section>
+  </>;
+}

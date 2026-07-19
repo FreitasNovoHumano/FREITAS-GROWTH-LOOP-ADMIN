@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Gift, Palette, Target } from "lucide-react";
 import Link from "next/link";
-import { productionAppUrl } from "@/lib/app-url";
+import { ADMIN_API_ROUTES, APP_ROUTES } from "@/lib/routes";
 
 export function CampaignForm() {
   const router = useRouter();
@@ -14,10 +14,10 @@ export function CampaignForm() {
     name: "",
     slug: "",
     description: "",
-    initialRewardTitle: "Guia exclusivo de crescimento",
-    initialRewardValue: "Acesso imediato",
-    milestoneRewardTitle: "Consultoria estratégica",
-    milestoneRewardValue: "Sessão de 45 minutos",
+    initialRewardTitle: "",
+    initialRewardValue: "",
+    milestoneRewardTitle: "",
+    milestoneRewardValue: "",
     qualifiedReferralGoal: 3,
     primaryColor: "#7c3aed",
   });
@@ -25,27 +25,33 @@ export function CampaignForm() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError("");
-    const response = await fetch("/api/admin/campaigns", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const body = await response.json();
-    if (!response.ok) {
-      setError(body.error || "Não foi possível criar");
+    try {
+      const response = await fetch(ADMIN_API_ROUTES.campaigns, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError(body.error || "Não foi possível criar a campanha.");
+        return;
+      }
+      router.push(APP_ROUTES.campaigns);
+      router.refresh();
+    } catch {
+      setError("Não foi possível conectar ao servidor. Tente novamente.");
+    } finally {
       setSaving(false);
-      return;
     }
-    router.push(productionAppUrl("/dashboard/campaigns"));
-    router.refresh();
   }
 
   return (
     <form onSubmit={submit} className="builder">
       <div className="builder-main">
-        <Link href={productionAppUrl("/dashboard/campaigns")} className="back">
+        <Link href={APP_ROUTES.campaigns} className="back">
           <ArrowLeft size={16} /> Campanhas
         </Link>
         <PageStep icon={<Target />} number="01" title="A campanha" description="Defina uma proposta clara e fácil de compartilhar.">
@@ -77,12 +83,13 @@ export function CampaignForm() {
           <div className="reward-fields">
             <div>
               <span className="step-pill">RECOMPENSA INICIAL</span>
-              <label>Título<input required value={data.initialRewardTitle} onChange={(event) => set("initialRewardTitle", event.target.value)} /></label>
-              <label>Valor ou descrição<input value={data.initialRewardValue} onChange={(event) => set("initialRewardValue", event.target.value)} /></label>
+              <label>Título<input required value={data.initialRewardTitle} onChange={(event) => set("initialRewardTitle", event.target.value)} placeholder="Ex.: Guia exclusivo" /></label>
+              <label>Valor ou descrição<input value={data.initialRewardValue} onChange={(event) => set("initialRewardValue", event.target.value)} placeholder="Ex.: Acesso imediato" /></label>
             </div>
             <div>
               <span className="step-pill warm">MARCO DE INDICAÇÕES</span>
-              <label>Título<input required value={data.milestoneRewardTitle} onChange={(event) => set("milestoneRewardTitle", event.target.value)} /></label>
+              <label>Título<input required value={data.milestoneRewardTitle} onChange={(event) => set("milestoneRewardTitle", event.target.value)} placeholder="Ex.: Consultoria estratégica" /></label>
+              <label>Valor ou descrição<input value={data.milestoneRewardValue} onChange={(event) => set("milestoneRewardValue", event.target.value)} placeholder="Ex.: Sessão de 45 minutos" /></label>
               <label>Quantidade qualificada<input type="number" min="1" max="100" value={data.qualifiedReferralGoal} onChange={(event) => set("qualifiedReferralGoal", Number(event.target.value))} /></label>
             </div>
           </div>

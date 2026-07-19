@@ -1,366 +1,269 @@
 .page {
-  --campaign-color: #7c3aed;
-  position: relative;
+  --campaign-color: #8b5cf6;
   display: grid;
-  gap: 24px;
+  gap: 28px;
+  min-height: 70vh;
   overflow: hidden;
-  border: 1px solid #27272a;
-  border-radius: 32px;
-  background:
-    radial-gradient(circle at 85% 5%, color-mix(in srgb, var(--campaign-color) 30%, transparent), transparent 27%),
-    linear-gradient(145deg, #18111f 0%, #09090b 52%, #050506 100%);
-  color: #fafafa;
-  padding: clamp(24px, 5vw, 56px);
-  box-shadow: 0 35px 80px rgba(24, 11, 42, 0.22);
-}
-
-.hero {
-  max-width: 760px;
+  border-radius: 24px;
+  background: #292929;
+  color: #f8f8f8;
+  padding: clamp(24px, 5vw, 52px);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 52px;
-  font-size: 1.05rem;
+  gap: 10px;
+  font-size: 0.95rem;
   font-weight: 800;
 }
 
 .brand img {
-  border-radius: 13px;
+  border-radius: 10px;
 }
 
-.brand b,
-.hero em {
-  color: color-mix(in srgb, var(--campaign-color) 78%, #ffffff);
-  font-style: normal;
+.brand b {
+  color: color-mix(in srgb, var(--campaign-color) 76%, #ffffff);
+}
+
+.hero {
+  margin-top: 4px;
 }
 
 .successBadge {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid rgba(74, 222, 128, 0.24);
-  border-radius: 999px;
-  background: rgba(34, 197, 94, 0.1);
   color: #86efac;
-  padding: 8px 12px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .hero h1 {
-  max-width: 720px;
-  margin: 20px 0 18px;
-  font-size: clamp(2.5rem, 6vw, 4.75rem);
-  line-height: 0.98;
-  letter-spacing: -0.045em;
+  margin: 12px 0 6px;
+  font-size: clamp(1.8rem, 4vw, 2.65rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
 }
 
-.hero > p {
-  max-width: 620px;
+.hero p {
   margin: 0;
-  color: #a1a1aa;
-  font-size: clamp(1rem, 2vw, 1.18rem);
-  line-height: 1.7;
+  color: #cfcfcf;
+  line-height: 1.5;
 }
 
 .rewardGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 14px;
-}
-
-.card,
-.shareCard,
-.videoCard {
-  border: 1px solid #27272a;
-  border-radius: 24px;
-  background: rgba(9, 9, 11, 0.78);
-  padding: 26px;
-}
-
-.card {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 0.85fr);
   gap: 18px;
 }
 
-.firstReward {
-  border-color: color-mix(in srgb, var(--campaign-color) 46%, #27272a);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--campaign-color) 16%, #09090b), #09090b 65%);
+.videoFrame {
+  min-height: 310px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #eeeeee;
 }
 
-.icon,
-.shareIntro > span {
+.videoFrame iframe,
+.videoFrame video,
+.videoPlaceholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 310px;
+  border: 0;
+  object-fit: cover;
+}
+
+.videoPlaceholder {
   display: grid;
-  width: 46px;
-  height: 46px;
   place-items: center;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--campaign-color) 18%, transparent);
+  color: #292929;
+}
+
+.videoPlaceholder svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 1.8;
+}
+
+.rewardCopy {
+  align-self: center;
+}
+
+.rewardCopy small {
   color: color-mix(in srgb, var(--campaign-color) 72%, #ffffff);
-}
-
-.icon svg,
-.shareIntro svg {
-  width: 21px;
-}
-
-.card small,
-.shareIntro small {
-  color: #a78bfa;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 800;
-  letter-spacing: 0.13em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
-.card h2,
-.shareCard h2 {
-  margin: 7px 0 9px;
-  color: #ffffff;
-  font-size: 1.35rem;
+.rewardCopy h2 {
+  margin: 9px 0 7px;
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  line-height: 1.12;
 }
 
-.card strong {
+.rewardCopy strong {
   display: block;
-  margin-bottom: 9px;
-  color: #d8b4fe;
+  margin-bottom: 10px;
+  color: #e2d9ff;
 }
 
-.card p,
-.shareCard p {
+.rewardCopy p,
+.shareCard > p {
   margin: 0;
-  color: #a1a1aa;
-  line-height: 1.6;
-}
-
-.primaryButton {
-  grid-column: 1 / -1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 12px;
-  background: var(--campaign-color);
-  color: #ffffff;
-  padding: 13px 18px;
-  font-weight: 800;
-  transition: transform 180ms ease, filter 180ms ease;
-}
-
-.primaryButton:hover,
-.shareButton:hover {
-  filter: brightness(1.12);
-  transform: translateY(-1px);
+  color: #eeeeee;
+  line-height: 1.28;
 }
 
 .goal {
-  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-top: 1px solid #27272a;
-  color: #d4d4d8;
-  padding-top: 17px;
-  font-size: 0.84rem;
-  line-height: 1.5;
+  gap: 9px;
+  margin-top: 18px;
+  color: #d4d4d4;
+  font-size: 0.82rem;
 }
 
 .goal svg {
   flex: 0 0 auto;
-  color: #a78bfa;
-}
-
-.goal b {
-  color: #ffffff;
-  font-size: 1rem;
+  color: color-mix(in srgb, var(--campaign-color) 72%, #ffffff);
 }
 
 .shareCard {
-  padding: clamp(24px, 4vw, 36px);
+  padding-top: 6px;
 }
 
-.videoCard {
-  display: grid;
-  gap: 18px;
-  padding: clamp(24px, 4vw, 36px);
-}
-
-.videoCard small {
-  color: #a78bfa;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.videoCard h2 {
-  margin: 7px 0 0;
-  color: #ffffff;
-}
-
-.videoFrame {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 16 / 9;
-  border: 1px solid #3f3f46;
-  border-radius: 18px;
-  background: #000000;
-}
-
-.videoFrame iframe,
-.videoFrame video {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  object-fit: contain;
-}
-
-.shareIntro {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 17px;
+.shareCard h2 {
+  margin-bottom: 9px;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
 }
 
 .linkBox {
-  margin-top: 26px;
+  margin-top: 22px;
 }
 
 .linkBox label {
   display: block;
   margin-bottom: 8px;
-  color: #d4d4d8;
-  font-size: 0.76rem;
+  color: #e5e5e5;
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .linkBox > div {
   display: grid;
   grid-template-columns: 1fr auto;
-  border: 1px solid #3f3f46;
-  border-radius: 14px;
-  background: #18181b;
-  padding: 6px;
+  gap: 14px;
 }
 
 .linkBox input {
   min-width: 0;
-  border: 0;
-  background: transparent;
-  color: #d4d4d8;
-  outline: 0;
-  padding: 10px 12px;
-  font-size: 0.86rem;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #272727;
+  padding: 12px;
 }
 
-.linkBox button {
+.linkBox button,
+.shareButton {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   border: 0;
-  border-radius: 10px;
-  background: #27272a;
+  border-radius: 6px;
+  background: #171717;
   color: #ffffff;
   cursor: pointer;
-  padding: 10px 14px;
+  padding: 11px 22px;
   font-weight: 700;
+}
+
+.linkBox button:hover,
+.shareButton:hover {
+  background: var(--campaign-color);
 }
 
 .linkBox button svg {
   width: 17px;
 }
 
+.alert {
+  margin-top: 12px !important;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  background: #451a1a;
+  color: #fecaca !important;
+  padding: 10px 12px;
+}
+
 .shareActions {
   display: flex;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.shareButton {
-  display: inline-flex;
-  min-height: 46px;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 12px;
-  cursor: pointer;
-  padding: 12px 18px;
-  font-weight: 800;
-  transition: transform 180ms ease, filter 180ms ease;
-}
-
-.shareButton {
-  background: var(--campaign-color);
-  color: #ffffff;
+  margin-top: 12px;
 }
 
 .socialGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
   margin-top: 12px;
 }
 
 .socialGrid a,
 .socialGrid button {
   display: inline-flex;
-  min-width: 0;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border: 1px solid #3f3f46;
-  border-radius: 12px;
-  background: #18181b;
-  color: #f4f4f5;
+  gap: 7px;
+  border: 1px solid #555555;
+  border-radius: 6px;
+  background: transparent;
+  color: #f5f5f5;
   cursor: pointer;
-  padding: 11px 10px;
+  padding: 9px 11px;
   font: inherit;
-  font-size: 0.79rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
 .socialGrid a:hover,
 .socialGrid button:hover {
-  border-color: color-mix(in srgb, var(--campaign-color) 60%, #3f3f46);
-  background: #27272a;
-  transform: translateY(-1px);
+  border-color: var(--campaign-color);
+  background: #353535;
 }
 
 .socialGrid svg {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
 }
 
-.socialGrid b {
-  font-size: 1.05rem;
-  line-height: 1;
+.socialMark {
+  font-size: 0.9rem;
 }
 
-.socialGrid .socialMark {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  border: 1px solid currentColor;
-  border-radius: 5px;
-  font-size: 0.68rem;
-  font-weight: 900;
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  border-radius: 6px;
+  background: var(--campaign-color);
+  color: #ffffff;
+  padding: 12px 18px;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
-.alert {
-  margin-top: 12px !important;
-  border: 1px solid rgba(248, 113, 113, 0.3);
-  border-radius: 10px;
-  background: rgba(127, 29, 29, 0.24);
-  color: #fecaca !important;
-  padding: 11px 13px;
+.primaryButton:hover {
+  filter: brightness(1.12);
 }
 
 .note {
@@ -368,8 +271,10 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  color: #71717a;
-  font-size: 0.77rem;
+  border-top: 1px solid #414141;
+  color: #bdbdbd;
+  padding-top: 20px;
+  font-size: 0.78rem;
   text-align: center;
 }
 
@@ -382,7 +287,7 @@
 
 .loading {
   display: grid;
-  color: var(--muted);
+  color: #737373;
 }
 
 .unavailable {
@@ -398,35 +303,40 @@
 }
 
 .unavailable p {
-  color: var(--muted);
+  color: #737373;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 800px) {
   .page {
-    border-radius: 22px;
-  }
-
-  .brand {
-    margin-bottom: 36px;
+    border-radius: 18px;
   }
 
   .rewardGrid {
     grid-template-columns: 1fr;
   }
 
-  .shareActions {
-    flex-direction: column;
+  .videoFrame,
+  .videoFrame iframe,
+  .videoFrame video,
+  .videoPlaceholder {
+    min-height: auto;
+    aspect-ratio: 16 / 9;
   }
+}
 
-  .socialGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+@media (max-width: 540px) {
   .linkBox > div {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 
-  .linkBox button {
-    justify-content: center;
+  .shareButton,
+  .primaryButton {
+    width: 100%;
+  }
+
+  .socialGrid a,
+  .socialGrid button {
+    flex: 1 1 calc(50% - 9px);
   }
 }

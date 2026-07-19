@@ -1,14 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { Check, Copy, ExternalLink, Gift, MessageCircle, Send, Share2, Sparkles, Users } from "lucide-react";
+import { Check, Copy, ExternalLink, Gift, MessageCircle, Play, Send, Sparkles, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { productionAppUrl } from "@/lib/app-url";
+import { PRODUCTION_APP_ORIGIN } from "@/lib/app-url";
 import styles from "./campaign-invite.module.css";
 
 type Campaign = {
   name?: string;
   title?: string;
+  status?: boolean;
   primaryColor?: string;
   initialRewardTitle?: string;
   initialRewardValue?: string | null;
@@ -24,6 +25,8 @@ type Campaign = {
   second_reward_video_url?: string | null;
   second_reward_invite_title?: string | null;
   second_reward_invite_text?: string | null;
+  thanks_title?: string | null;
+  thanks_text?: string | null;
   error?: string;
 };
 
@@ -71,14 +74,19 @@ export function CampaignInvite({ campaignSlug, leadSlug }: { campaignSlug: strin
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [shareError, setShareError] = useState("");
+  const [appOrigin, setAppOrigin] = useState(PRODUCTION_APP_ORIGIN);
 
   const validLeadSlug = Boolean(leadSlug && leadSlugPattern.test(leadSlug));
   const inviteUrl = useMemo(() => validLeadSlug
-    ? productionAppUrl(`/c/${encodeURIComponent(campaignSlug)}?invited_by_lead_slug=${encodeURIComponent(leadSlug!)}`)
-    : "", [campaignSlug, leadSlug, validLeadSlug]);
+    ? new URL(`/c/${encodeURIComponent(campaignSlug)}?invited_by_lead_slug=${encodeURIComponent(leadSlug!)}`, appOrigin).toString()
+    : "", [appOrigin, campaignSlug, leadSlug, validLeadSlug]);
   const rewardUrl = validLeadSlug
-    ? productionAppUrl(`/api/campaigns/${encodeURIComponent(campaignSlug)}/leads/${encodeURIComponent(leadSlug!)}/claim_reward`)
+    ? `/api/campaigns/${encodeURIComponent(campaignSlug)}/leads/${encodeURIComponent(leadSlug!)}/claim_reward`
     : "";
+
+  useEffect(() => {
+    setAppOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!validLeadSlug) {
@@ -97,6 +105,9 @@ export function CampaignInvite({ campaignSlug, leadSlug }: { campaignSlug: strin
         return body as Campaign;
       })
       .then((value) => {
+        if (value.status === false) {
+          throw new Error("Campanha não disponível.");
+        }
         setCampaign(value);
         document.title = `Compartilhe ${value.title ?? value.name ?? "sua campanha"} | Growth Loop`;
       })
@@ -165,7 +176,6 @@ export function CampaignInvite({ campaignSlug, leadSlug }: { campaignSlug: strin
 
   const campaignName = campaign.title ?? campaign.name ?? "Growth Loop";
   const firstRewardTitle = campaign.first_reward_title ?? campaign.initialRewardTitle ?? "Recompensa inicial";
-  const firstRewardText = campaign.first_reward_text ?? campaign.initialRewardValue;
   const secondRewardTitle = campaign.second_reward_title ?? campaign.milestoneRewardTitle ?? "Próxima recompensa";
   const secondRewardText = campaign.second_reward_text ?? campaign.milestoneRewardValue;
   const goal = campaign.required_leads_for_second_reward ?? campaign.qualifiedReferralGoal ?? 1;
@@ -182,79 +192,52 @@ export function CampaignInvite({ campaignSlug, leadSlug }: { campaignSlug: strin
 
   return (
     <section className={styles.page} style={{ "--campaign-color": campaign.primaryColor ?? "#7c3aed" } as React.CSSProperties}>
-      <header className={styles.hero}>
-        <div className={styles.brand}>
-          <Image src="/freitas-loop.png" alt="Freitas Growth Loop" width={46} height={46} priority />
-          <span>Freitas Growth <b>Loop</b></span>
-        </div>
-        <span className={styles.successBadge}><Check size={16} /> Inscrição concluída</span>
-        <h1>Você entrou no loop.<br /><em>Agora faça ele crescer.</em></h1>
-        <p>Sua recompensa está pronta e seu link exclusivo já pode ser compartilhado.</p>
-      </header>
-
-      <div className={styles.rewardGrid}>
-        <article className={`${styles.card} ${styles.firstReward}`}>
-          <span className={styles.icon}><Gift /></span>
-          <div>
-            <small>Disponível agora</small>
-            <h2>{firstRewardTitle}</h2>
-            {firstRewardText && <p>{firstRewardText}</p>}
-          </div>
-          <a className={styles.primaryButton} href={rewardUrl}>
-            Acessar recompensa <ExternalLink size={17} />
-          </a>
-        </article>
-
-        <article className={styles.card}>
-          <span className={styles.icon}><Sparkles /></span>
-          <div>
-            <small>Próxima conquista</small>
-            <h2>{secondRewardTitle}</h2>
-            {campaign.second_reward_subtitle && <strong>{campaign.second_reward_subtitle}</strong>}
-            {secondRewardText && <p>{secondRewardText}</p>}
-          </div>
-          <div className={styles.goal}>
-            <Users size={18} />
-            <span><b>{goal}</b> {goal === 1 ? "amigo precisa" : "amigos precisam"} se cadastrar e resgatar a recompensa</span>
-          </div>
-        </article>
+      <div className={styles.brand}>
+        <Image src="/freitas-loop.png" alt="Freitas Growth Loop" width={36} height={36} priority />
+        <span>Freitas Growth <b>Loop</b></span>
       </div>
 
-      {secondRewardVideoUrl && (
-        <article className={styles.videoCard}>
-          <div>
-            <small>Conheça a próxima recompensa</small>
-            <h2>{secondRewardTitle}</h2>
-          </div>
-          <div className={styles.videoFrame}>
-            {secondRewardYoutubeUrl ? (
-              <iframe
-                src={secondRewardYoutubeUrl}
-                title={`Vídeo sobre ${secondRewardTitle}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <video src={secondRewardVideoUrl} controls preload="metadata">
-                Seu navegador não suporta a reprodução deste vídeo.
-              </video>
-            )}
+      <header className={styles.hero}>
+        <span className={styles.successBadge}><Check size={16} /> Inscrição concluída</span>
+        <h1>{campaign.thanks_title ?? "Sua recompensa foi enviada por e-mail 🎉"}</h1>
+        {campaign.thanks_text && <p>{campaign.thanks_text}</p>}
+      </header>
+
+      <section className={styles.rewardGrid} aria-label="Próxima recompensa">
+        <div className={styles.videoFrame}>
+          {secondRewardYoutubeUrl ? (
+            <iframe
+              src={secondRewardYoutubeUrl}
+              title={`Vídeo sobre ${secondRewardTitle}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : secondRewardVideoUrl ? (
+            <video src={secondRewardVideoUrl} controls preload="metadata">
+              Seu navegador não suporta a reprodução deste vídeo.
+            </video>
+          ) : (
+            <div className={styles.videoPlaceholder} aria-label="Vídeo não configurado"><Play aria-hidden="true" /></div>
+          )}
+        </div>
+        <article className={styles.rewardCopy}>
+          <small>Mais uma recompensa para você</small>
+          <h2>{secondRewardTitle}</h2>
+          {campaign.second_reward_subtitle && <strong>{campaign.second_reward_subtitle}</strong>}
+          {secondRewardText && <p>{secondRewardText}</p>}
+          <div className={styles.goal}>
+            <Users size={18} />
+            <span>Convide <b>{goal}</b> {goal === 1 ? "amigo" : "amigos"} para desbloquear.</span>
           </div>
         </article>
-      )}
+      </section>
 
       <article className={styles.shareCard}>
-        <div className={styles.shareIntro}>
-          <span><Share2 /></span>
-          <div>
-            <small>Seu próximo passo</small>
-            <h2>{campaign.second_reward_invite_title ?? "Convide seus amigos"}</h2>
-            <p>{campaign.second_reward_invite_text ?? `Compartilhe seu link. Quando ${goal} convidados resgatarem a primeira recompensa, você desbloqueia ${secondRewardTitle}.`}</p>
-          </div>
-        </div>
+        <h2>{campaign.second_reward_invite_title ?? "Convide e libere sua recompensa especial"}</h2>
+        <p>{campaign.second_reward_invite_text ?? `Compartilhe seu link. Quando ${goal} convidados resgatarem a primeira recompensa, você desbloqueia ${secondRewardTitle}.`}</p>
 
         <div className={styles.linkBox}>
-          <label htmlFor="invite-link">Seu link exclusivo</label>
+          <label htmlFor="invite-link">Envie seu link único:</label>
           <div>
             <input id="invite-link" readOnly value={inviteUrl} onFocus={(event) => event.currentTarget.select()} />
             <button type="button" onClick={copyInviteLink} aria-label="Copiar link de indicação">
@@ -285,11 +268,15 @@ export function CampaignInvite({ campaignSlug, leadSlug }: { campaignSlug: strin
             <b aria-hidden="true">𝕏</b> <span>Twitter / X</span>
           </a>
         </div>
+
+        <a className={styles.primaryButton} href={rewardUrl}>
+          <Gift size={17} /> Acessar {firstRewardTitle} <ExternalLink size={16} />
+        </a>
       </article>
 
-      <footer className={styles.note}>
+      <div className={styles.note}>
         <Sparkles size={15} /> Cada amigo deve concluir o cadastro e acessar a primeira recompensa para contar na meta.
-      </footer>
+      </div>
     </section>
   );
 }

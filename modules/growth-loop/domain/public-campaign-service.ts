@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { escapeHtml, sendTransactionalEmail } from "@/lib/email";
+import { sendTransactionalEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import {
   hashValue,
@@ -14,7 +14,7 @@ import { grantReward } from "./reward-service";
 import { participantSchema } from "../schemas/participant";
 import { PRODUCTION_APP_ORIGIN } from "@/lib/app-url";
 import { buildFirstRewardEmail } from "../email-templates/first-reward-email";
-import { renderEmailTemplate } from "../email-templates/template-utils";
+import { buildSecondRewardEmail } from "../email-templates/second-reward-email";
 
 const emailSchema = z.string().trim().email("E-mail inválido").transform(normalizeEmail);
 const leadSlugSchema = z.string().trim().min(16).max(128).regex(/^[A-Za-z0-9_-]+$/, "Slug de lead inválido");
@@ -468,20 +468,18 @@ export async function claimCampaignReward(campaignSlug: string, requestedLeadSlu
         const secondReward = campaign.rewards.find((reward) => ["indicacoes", "MILESTONE", "SECOND"].includes(reward.key));
         const secondEmail = emailTemplate(campaign, "SECOND_REWARD", "MILESTONE_REWARD");
         const secondRewardUrl = rewardRedirectUrl(secondReward?.claimUrl, templateUrl(campaign.slug));
-        const milestoneVariables = {
+        const rewardEmail = buildSecondRewardEmail({
           participantName: inviterLead.name,
           campaignName: campaign.name,
           rewardTitle: campaign.milestoneRewardTitle,
           rewardValue: campaign.milestoneRewardValue ?? "",
           rewardUrl: secondRewardUrl,
-          qualifiedReferralGoal: String(campaign.qualifiedReferralGoal),
-        };
+          qualifiedReferralGoal: campaign.qualifiedReferralGoal,
+          customTemplate: secondEmail,
+        });
         await sendCampaignEmail({
           to: inviterLead.email,
-          subject: secondEmail?.subject ?? `Você desbloqueou: ${campaign.milestoneRewardTitle}`,
-          html: secondEmail?.html
-            ? renderEmailTemplate(secondEmail.html, milestoneVariables)
-            : `<h1>${escapeHtml(campaign.milestoneRewardTitle)}</h1><p>${escapeHtml(campaign.milestoneRewardValue)}</p><p><a href="${escapeHtml(secondRewardUrl)}">Acessar recompensa</a></p>`,
+          ...rewardEmail,
         });
         if (inviterLead.participantId && secondReward?.ruleVersions[0]) {
           await grantReward({

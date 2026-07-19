@@ -1,134 +1,141 @@
 .page {
+  --campaign-color: #8b5cf6;
   display: grid;
-  gap: 32px;
+  gap: clamp(34px, 6vw, 64px);
+  min-height: 70vh;
+  border-radius: 24px;
+  background: #292929;
+  color: #f8f8f8;
+  padding: clamp(24px, 5vw, 52px);
 }
 
-.hero {
-  text-align: center;
-}
-
-.hero h1 {
-  margin: 8px 0 12px;
-  font-size: clamp(2.25rem, 6vw, 4.5rem);
-  line-height: 1;
-}
-
-.hero > p:last-child,
-.card p,
-.explanation p,
-.inviteCopy p {
-  color: var(--muted);
-  line-height: 1.65;
-}
-
-.eyebrow,
-.card > span {
-  color: var(--purple);
-  font-size: 0.75rem;
+.hero span {
+  color: color-mix(in srgb, var(--campaign-color) 72%, #ffffff);
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
-.rewardGrid {
+.hero h1 {
+  margin: 10px 0 0;
+  font-size: clamp(1.8rem, 4vw, 2.65rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.registrationGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.card,
-.explanation,
-.inviteCopy,
-.form {
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--white);
-  padding: 28px;
-}
-
-.card h2,
-.explanation h2,
-.inviteCopy h2,
-.form h2 {
-  margin: 8px 0 10px;
-}
-
-.card h3 {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 0.95rem;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 1fr);
+  align-items: stretch;
+  gap: 22px;
 }
 
 .video {
-  margin-top: 20px;
+  min-height: 310px;
   overflow: hidden;
-  border-radius: 12px;
-  background: #17151f;
+  border-radius: 4px;
+  background: #eeeeee;
 }
 
-.video video {
+.video iframe,
+.video video,
+.videoPlaceholder {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-}
-
-.explanation {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.75fr);
-  align-items: center;
-  gap: 28px;
-}
-
-.image {
-  position: relative;
-  min-height: 260px;
-  overflow: hidden;
-  border-radius: 14px;
-}
-
-.image img {
+  height: 100%;
+  min-height: 310px;
+  border: 0;
   object-fit: cover;
 }
 
-.inviteCopy {
-  text-align: center;
+.videoPlaceholder {
+  display: grid;
+  place-items: center;
+  color: #292929;
+}
+
+.videoPlaceholder svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 1.8;
+}
+
+.signupPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.signupPanel > p {
+  margin: 0 0 18px;
+  color: #f4f4f4;
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.2;
 }
 
 .form {
   display: grid;
-  gap: 16px;
-  width: min(100%, 620px);
-  margin-inline: auto;
+  gap: 10px;
+  margin-top: auto;
 }
 
 .form label {
-  font-size: 0.85rem;
+  display: block;
 }
 
-.form small {
-  color: var(--muted);
-  font-weight: 400;
+.form label:not(.consent) > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.form input:not([type="checkbox"]) {
+  width: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #202020;
+  padding: 11px 12px;
+}
+
+.form input:focus {
+  border-color: var(--campaign-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--campaign-color) 24%, transparent);
 }
 
 .consent {
   display: grid !important;
   grid-template-columns: auto 1fr;
   align-items: start;
+  gap: 8px;
+  color: #c9c9c9;
+  font-size: 0.7rem;
+  line-height: 1.35;
 }
 
 .consent input {
   width: auto;
-  margin-top: 2px;
+  margin: 2px 0 0;
 }
 
 .form button {
   border: 0;
-  border-radius: 10px;
-  background: var(--purple);
-  color: var(--white);
+  border-radius: 6px;
+  background: #171717;
+  color: #ffffff;
   cursor: pointer;
   padding: 13px 18px;
+  font-size: 0.76rem;
   font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.form button:hover:not(:disabled) {
+  background: var(--campaign-color);
 }
 
 .form button:disabled {
@@ -137,11 +144,44 @@
 }
 
 .alert {
-  border: 1px solid #efb4ae;
-  border-radius: 10px;
-  background: #fff1f0;
-  color: #9f2018;
-  padding: 12px 14px;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  background: #451a1a;
+  color: #fecaca;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+}
+
+.explanation {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  align-items: center;
+  gap: clamp(28px, 7vw, 72px);
+}
+
+.explanation h2 {
+  margin-bottom: 12px;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+
+.explanation p {
+  margin: 0;
+  color: #eeeeee;
+  font-size: 1rem;
+  line-height: 1.28;
+  white-space: pre-line;
+}
+
+.image {
+  position: relative;
+  min-height: 280px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #eeeeee;
+}
+
+.image img {
+  object-fit: cover;
 }
 
 .loading,
@@ -153,7 +193,7 @@
 
 .loading {
   display: grid;
-  color: var(--muted);
+  color: #737373;
 }
 
 .unavailable {
@@ -169,12 +209,32 @@
 }
 
 .unavailable p {
-  color: var(--muted);
+  color: #737373;
 }
 
-@media (max-width: 900px) {
-  .rewardGrid,
+@media (max-width: 800px) {
+  .page {
+    border-radius: 18px;
+  }
+
+  .registrationGrid,
   .explanation {
     grid-template-columns: 1fr;
+  }
+
+  .video,
+  .video iframe,
+  .video video,
+  .videoPlaceholder {
+    min-height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .signupPanel > p {
+    margin-bottom: 20px;
+  }
+
+  .image {
+    min-height: 230px;
   }
 }

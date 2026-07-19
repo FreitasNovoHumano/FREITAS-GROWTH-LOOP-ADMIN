@@ -3,12 +3,14 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { productionAppUrl } from "@/lib/app-url";
+import { Play } from "lucide-react";
 import styles from "./campaign-registration.module.css";
 
 type Campaign = {
   slug: string;
   title: string;
+  status?: boolean;
+  primaryColor?: string | null;
   description?: string | null;
   first_reward_title: string;
   first_reward_text?: string | null;
@@ -52,6 +54,24 @@ function normalizedPublicUrl(value?: string | null) {
   }
 }
 
+function youtubeEmbedUrl(value?: string | null) {
+  const source = normalizedPublicUrl(value);
+  if (!source) return null;
+  const url = new URL(source);
+  if (url.username || url.password || url.port) return null;
+  const allowedHosts = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"]);
+  const videoId = url.hostname === "youtu.be"
+    ? url.pathname.slice(1).split("/")[0]
+    : allowedHosts.has(url.hostname)
+      ? url.pathname.startsWith("/embed/")
+        ? url.pathname.split("/")[2]
+        : url.searchParams.get("v")
+      : null;
+  return videoId && /^[A-Za-z0-9_-]{6,20}$/.test(videoId)
+    ? `https://www.youtube-nocookie.com/embed/${videoId}`
+    : null;
+}
+
 async function responseBody(response: Response): Promise<RegistrationResponse> {
   try {
     return await response.json() as RegistrationResponse;
@@ -66,11 +86,24 @@ function apiErrorMessage(response: Response, body: RegistrationResponse) {
 
 function CampaignMedia({ url, title }: { url?: string | null; title: string }) {
   const source = normalizedPublicUrl(url);
-  if (!source) return null;
+  const youtubeSource = youtubeEmbedUrl(url);
 
   return (
     <div className={styles.video}>
-      <video controls preload="metadata" src={source} aria-label={title} />
+      {youtubeSource ? (
+        <iframe
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          src={youtubeSource}
+          title={title}
+        />
+      ) : source ? (
+        <video controls preload="metadata" src={source} aria-label={title} />
+      ) : (
+        <div className={styles.videoPlaceholder} aria-label="Vídeo não configurado">
+          <Play aria-hidden="true" />
+        </div>
+      )}
     </div>
   );
 }
@@ -104,6 +137,7 @@ export function CampaignRegistration({
         return body as Campaign;
       })
       .then((value) => {
+        if (value.status === false) throw new Error("Campanha indisponível");
         setCampaign(value);
         document.title = `${value.title} | Growth Loop`;
       })
@@ -134,7 +168,7 @@ export function CampaignRegistration({
       if (!response.ok) throw new Error(apiErrorMessage(response, body));
       if (!body.lead?.slug) throw new Error("A API não retornou o slug do lead cadastrado.");
 
-      router.push(productionAppUrl(`/c/${encodeURIComponent(slug)}/invite?lead_slug=${encodeURIComponent(body.lead.slug)}`));
+      router.push(`/c/${encodeURIComponent(slug)}/invite?lead_slug=${encodeURIComponent(body.lead.slug)}`);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Não foi possível concluir o cadastro.");
     } finally {
@@ -154,30 +188,47 @@ export function CampaignRegistration({
 
   if (!campaign) return <p className={styles.loading}>Carregando campanha…</p>;
 
-  const howItWorksImage = normalizedPublicUrl(campaign.first_reward_how_it_works_img_url);
+  const howItWorksImage = youtubeEmbedUrl(campaign.first_reward_how_it_works_img_url)
+    ? null
+    : normalizedPublicUrl(campaign.first_reward_how_it_works_img_url);
 
   return (
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        <p className={styles.eyebrow}>Campanha</p>
-        <h1>{campaign.title}</h1>
-        {campaign.description && <p>{campaign.description}</p>}
-      </section>
+    <div className={styles.page} style={{ "--campaign-color": campaign.primaryColor ?? "#8b5cf6" } as React.CSSProperties}>
+      <header className={styles.hero}>
+        <span>Campanha · {campaign.title}</span>
+        <h1>{campaign.first_reward_title}</h1>
+      </header>
 
-      <section className={styles.rewardGrid} aria-label="Recompensas da campanha">
-        <article className={styles.card}>
-          <span>1ª recompensa</span>
-          <h2>{campaign.first_reward_title}</h2>
-          {campaign.first_reward_text && <p>{campaign.first_reward_text}</p>}
-          <CampaignMedia url={campaign.first_reward_video_url} title={campaign.first_reward_title} />
-        </article>
-        <article className={styles.card}>
-          <span>2ª recompensa</span>
-          <h2>{campaign.second_reward_title}</h2>
-          {campaign.second_reward_subtitle && <h3>{campaign.second_reward_subtitle}</h3>}
-          {campaign.second_reward_text && <p>{campaign.second_reward_text}</p>}
-          <CampaignMedia url={campaign.second_reward_video_url} title={campaign.second_reward_title} />
-        </article>
+      <section className={styles.registrationGrid}>
+        <CampaignMedia url={campaign.first_reward_video_url} title={campaign.first_reward_title} />
+        <div className={styles.signupPanel}>
+          <p>{campaign.first_reward_text ?? campaign.description}</p>
+          <form className={styles.form} onSubmit={register}>
+            {invitedByLeadSlug && (
+              <input name="invited_by_lead_slug" type="hidden" value={invitedByLeadSlug} />
+            )}
+            <label>
+              <span>Nome</span>
+              <input autoComplete="name" maxLength={100} placeholder="Seu nome" required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+            </label>
+            <label>
+              <span>E-mail</span>
+              <input autoComplete="email" maxLength={200} placeholder="voce@email.com" required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+            </label>
+            <label>
+              <span>WhatsApp</span>
+              <input autoComplete="tel" maxLength={30} placeholder="(00) 00000-0000" type="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+            </label>
+            <label className={styles.consent}>
+              <input checked={form.consent} required type="checkbox" onChange={(event) => setForm({ ...form, consent: event.target.checked })} />
+              <span>Concordo com os Termos de Uso e a Política de Privacidade.</span>
+            </label>
+            {formError && <div className={styles.alert} role="alert">{formError}</div>}
+            <button disabled={submitting || !form.consent} type="submit">
+              {submitting ? "Enviando…" : "Acessar agora"}
+            </button>
+          </form>
+        </div>
       </section>
 
       {(campaign.first_reward_how_it_works_title || campaign.first_reward_how_it_works_text || howItWorksImage) && (
@@ -200,64 +251,6 @@ export function CampaignRegistration({
           )}
         </section>
       )}
-
-      {(campaign.second_reward_invite_title || campaign.second_reward_invite_text) && (
-        <section className={styles.inviteCopy}>
-          {campaign.second_reward_invite_title && <h2>{campaign.second_reward_invite_title}</h2>}
-          {campaign.second_reward_invite_text && <p>{campaign.second_reward_invite_text}</p>}
-        </section>
-      )}
-
-      <form className={styles.form} onSubmit={register}>
-        <h2>Quero participar</h2>
-        {invitedByLeadSlug && (
-          <input name="invited_by_lead_slug" type="hidden" value={invitedByLeadSlug} />
-        )}
-        <label>
-          Nome
-          <input
-            autoComplete="name"
-            maxLength={100}
-            required
-            value={form.name}
-            onChange={(event) => setForm({ ...form, name: event.target.value })}
-          />
-        </label>
-        <label>
-          E-mail
-          <input
-            autoComplete="email"
-            maxLength={200}
-            required
-            type="email"
-            value={form.email}
-            onChange={(event) => setForm({ ...form, email: event.target.value })}
-          />
-        </label>
-        <label>
-          WhatsApp <small>opcional</small>
-          <input
-            autoComplete="tel"
-            maxLength={30}
-            type="tel"
-            value={form.phone}
-            onChange={(event) => setForm({ ...form, phone: event.target.value })}
-          />
-        </label>
-        <label className={styles.consent}>
-          <input
-            checked={form.consent}
-            required
-            type="checkbox"
-            onChange={(event) => setForm({ ...form, consent: event.target.checked })}
-          />
-          <span>Concordo com os Termos de Uso e a Política de Privacidade.</span>
-        </label>
-        {formError && <div className={styles.alert} role="alert">{formError}</div>}
-        <button disabled={submitting || !form.consent} type="submit">
-          {submitting ? "Enviando…" : "Participar da campanha"}
-        </button>
-      </form>
     </div>
   );
 }
