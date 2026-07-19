@@ -1,35 +1,11 @@
-import 'dotenv/config'
-import { createApp } from './app.js'
-import { connectDatabase } from './config/database.js'
-import { syncModels } from './models/index.js'
+import bcrypt from "bcryptjs";
 
-const port = Number(process.env.PORT || 3000)
+const PASSWORD_SALT_ROUNDS = 12;
 
-async function start() {
-  try {
-    await connectDatabase()
-    await syncModels()
-
-    const { app, admin } = await createApp()
-
-    if (process.env.NODE_ENV === 'development') {
-      await admin.watch()
-    }
-
-    app.listen(port, () => {
-      console.log(
-        `${process.env.APP_NAME || 'FreitasGrowthLoop'} disponível em ` +
-          `http://localhost:${port}`
-      )
-      console.log(
-        `AdminJS disponível em ` +
-          `http://localhost:${port}${admin.options.rootPath}`
-      )
-    })
-  } catch (error) {
-    console.error('Não foi possível iniciar a aplicação:', error)
-    process.exit(1)
-  }
+export function hashPassword(password) {
+  return bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
 }
 
-start()
+export function verifyPassword(password, passwordHash) {
+  return bcrypt.compare(password, passwordHash);
+}
