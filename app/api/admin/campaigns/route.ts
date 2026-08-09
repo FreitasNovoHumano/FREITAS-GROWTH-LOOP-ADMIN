@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminTenant, AuthorizationError } from "@/lib/authorization";
 import { campaignSchema } from "@/modules/growth-loop/schemas/campaign";
+import { Prisma } from "@prisma/client";
+import { ZodError } from "zod";
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +34,24 @@ export async function POST(request: Request) {
     await prisma.auditLog.create({ data: { clientId, campaignId: campaign.id, actorId: userId, actorType: "USER", action: "CAMPAIGN_CREATED", entityType: "Campaign", entityId: campaign.id, metadata: { name: input.name } } });
     return NextResponse.json(campaign, { status: 201 });
   } catch (error) {
-    if (error && typeof error === "object" && "issues" in error) return NextResponse.json({ error: "Dados inválidos", details: error }, { status: 400 });
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          error: "Revise os dados da campanha.",
+          fields: error.flatten().fieldErrors,
+        },
+        { status: 400 },
+      );
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "Este slug já está sendo usado por outra campanha." },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ error: error instanceof Error ? error.message : "Erro" }, { status: error instanceof AuthorizationError ? 403 : 500 });
   }
 }

@@ -1,8 +1,20 @@
 import { z } from "zod";
+import { normalizeCampaignSlug } from "@/lib/slug";
 
 export const campaignSchema = z.object({
   name: z.string().trim().min(3).max(100),
-  slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  slug: z.preprocess(
+    (value) =>
+      typeof value === "string" ? normalizeCampaignSlug(value) : value,
+    z
+      .string()
+      .min(3, "O slug deve ter pelo menos 3 caracteres.")
+      .max(100, "O slug deve ter no máximo 100 caracteres.")
+      .regex(
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+        "Use apenas letras minúsculas, números e hífens.",
+      ),
+  ),
   description: z.string().trim().max(500).optional(),
   initialRewardTitle: z.string().trim().min(3).max(120),
   initialRewardValue: z.string().trim().max(200).optional(),
