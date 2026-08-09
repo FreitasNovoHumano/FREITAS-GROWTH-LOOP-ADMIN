@@ -7,6 +7,12 @@
 :focus-visible{outline:3px solid #a989ff;outline-offset:3px}
 .dashboard-back-button{position:fixed;right:24px;bottom:24px;z-index:20;display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--purple-dark);font-size:13px;font-weight:700;box-shadow:0 10px 28px #231b3824}
 .dashboard-back-button:hover{border-color:#b8a4f5;background:var(--lavender);transform:translateY(-1px)}
+.embed-panel{display:grid;gap:18px;margin-bottom:20px}
+.embed-panel-copy{display:flex;align-items:flex-start;gap:14px}.embed-panel-copy h2{margin-bottom:5px}.embed-panel-copy p{margin:0}
+.embed-icon{width:42px;height:42px;flex:0 0 auto;display:grid;place-items:center;border-radius:11px;background:var(--lavender);color:var(--purple)}.embed-icon svg{width:20px}
+.embed-code{margin:0;overflow:auto;border:1px solid #373043;border-radius:11px;background:#1f1a27;color:#eee9ff;padding:16px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+.embed-actions{display:flex;gap:10px;flex-wrap:wrap}.embed-warning{margin-top:8px!important;color:#9b6300!important;font-weight:700}
+.embed-tutorial{display:flex;align-items:flex-start;gap:16px;margin-top:20px;scroll-margin-top:24px}.embed-tutorial>svg{flex:0 0 auto;color:var(--purple)}.embed-tutorial h2{margin-top:7px}.embed-tutorial ol{padding-left:20px;color:#4a4652;font-size:13px;line-height:1.7}.embed-tutorial code,.embed-panel code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 .metric-grid-six{grid-template-columns:repeat(3,1fr)}
 .period-filter{display:flex;flex-wrap:wrap;gap:8px;margin:-10px 0 22px}
 .period-filter a{border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 13px;color:var(--muted);font-size:12px;font-weight:700}

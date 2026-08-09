@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ExternalLink, Gift, Target, UserRoundPlus, Users } from "lucide-react";
+import { Code2, ExternalLink, Gift, Target, UserRoundPlus, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmbedScriptActions } from "@/components/campaigns/embed-script-actions";
 import { PublicLinkActions } from "@/components/campaigns/public-link-actions";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -15,6 +16,16 @@ import {
 } from "@/lib/client-area";
 import { getClientCampaignDetail } from "@/lib/client-data";
 import { requireTenant } from "@/lib/authorization";
+import { buildEmbedSnippet, createPublicClientToken } from "@/lib/embed";
+
+function embedAppOrigin() {
+  const configured =
+    process.env.GROWTH_LOOP_NEXTAUTH_URL ??
+    process.env.NEXTAUTH_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
+    "http://localhost:3001";
+  return new URL(configured).origin;
+}
 
 export default async function CampaignDetailPage({
   params,
@@ -27,6 +38,13 @@ export default async function CampaignDetailPage({
   if (!result) redirect("/dashboard/campaigns");
 
   const { campaign, funnel, rewardGrants } = result;
+  const publicToken = createPublicClientToken(clientId);
+  const embedSnippet = buildEmbedSnippet(
+    embedAppOrigin(),
+    publicToken,
+    campaign.slug,
+  );
+  const publicCampaignPath = `/growth-loop/${campaign.slug}?clientId=${clientId}`;
   const conversionRate = calculateConversionRate(
     campaign._count.leads,
     campaign._count.invitations,
@@ -50,7 +68,7 @@ export default async function CampaignDetailPage({
         action={
           <Link
             className="button secondary"
-            href={`/growth-loop/${campaign.slug}`}
+            href={publicCampaignPath}
             target="_blank"
           >
             <ExternalLink size={17} aria-hidden="true" />
@@ -66,6 +84,11 @@ export default async function CampaignDetailPage({
         <Metric label="Leads" value={campaign._count.leads} />
         <Metric label="Conversão" value={`${conversionRate}%`} />
       </section>
+
+      <EmbedScriptActions
+        campaignStatus={campaign.status}
+        script={embedSnippet}
+      />
 
       <section className="panel">
         <div className="panel-head">
@@ -264,12 +287,36 @@ export default async function CampaignDetailPage({
         <Gift aria-hidden="true" />
         <span>
           <strong>Página pública da campanha</strong>
-          <small>/growth-loop/{campaign.slug}</small>
+          <small>{publicCampaignPath}</small>
         </span>
         <PublicLinkActions
-          path={`/growth-loop/${campaign.slug}`}
+          path={publicCampaignPath}
           campaignName={campaign.name}
         />
+      </section>
+
+      <section className="panel embed-tutorial" id="tutorial-embed">
+        <Code2 aria-hidden="true" />
+        <div>
+          <span className="eyebrow">TUTORIAL DE INSTALAÇÃO</span>
+          <h2>Como instalar na Freitas Growth AI</h2>
+          <ol>
+            <li>Copie o script exibido acima.</li>
+            <li>Abra o editor da página onde a campanha deve aparecer.</li>
+            <li>
+              Cole o script antes do fechamento da tag <code>&lt;/body&gt;</code>
+              e publique a página.
+            </li>
+            <li>
+              Confirme que a campanha está ativa e teste o botão flutuante no
+              site publicado.
+            </li>
+          </ol>
+          <p>
+            O carregamento é assíncrono. Token inválido, campanha em rascunho ou
+            indisponibilidade da API não interrompem o restante da página.
+          </p>
+        </div>
       </section>
     </>
   );
