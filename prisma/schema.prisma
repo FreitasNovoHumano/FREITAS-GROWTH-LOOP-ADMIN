@@ -469,3 +469,20 @@ model DomainEvent {
 
   @@index([status, availableAt])
 }
+
+model Notification {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId   String  @db.ObjectId
+  postId   String? @db.ObjectId
+  clientId String? @db.ObjectId
+
+  title   String
+  message String
+  type    String
+  read    Boolean @default(false)
+  link    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,18 +1,22 @@
-"use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
-import { BarChart3, Gift, LayoutDashboard, LogOut, Mail, Orbit, Settings, ShieldAlert, Target, Users, UserRoundPlus } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
-const links = [
-  ["Visão geral", "/dashboard", LayoutDashboard], ["Campanhas", "/dashboard/campaigns", Target],
-  ["Leads", "/dashboard/leads", UserRoundPlus], ["Participantes", "/dashboard/participants", Users],
-  ["Recompensas", "/dashboard/rewards", Gift], ["Relatórios", "/dashboard/reports", BarChart3],
-  ["E-mails", "/dashboard/emails", Mail], ["Antifraude", "/dashboard/fraud", ShieldAlert],
-  ["Configurações", "/dashboard/settings", Settings],
-] as const;
+import { AdminSidebar } from "@/components/dashboard/admin-sidebar";
+import { ClientSidebar } from "@/components/dashboard/client-sidebar";
+import { authOptions } from "@/lib/auth";
 
-export function Sidebar() {
-  const path = usePathname(); const { data } = useSession();
-  return <aside className="sidebar"><div className="brand side-brand"><span className="brand-mark"><Orbit/></span><span>Growth <b>Loop</b></span></div><div className="workspace"><span className="workspace-avatar">FG</span><span><small>EMPRESA</small><strong>Freitas Growth AI</strong></span></div><nav>{links.map(([label, href, Icon]) => <Link className={path === href ? "active" : ""} href={href} key={href}><Icon size={19}/>{label}</Link>)}</nav><div className="side-user"><span className="avatar">{data?.user?.name?.[0] ?? "U"}</span><span><strong>{data?.user?.name ?? "Usuário"}</strong><small>{data?.user?.email}</small></span><button aria-label="Sair" onClick={() => signOut({ callbackUrl: "/login" })}><LogOut size={18}/></button></div></aside>;
+export async function Sidebar() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) redirect("/login");
+
+  const user = {
+    name: session.user.name ?? "Usuário",
+    email: session.user.email ?? "",
+  };
+
+  return session.user.role === "ADMIN" ? (
+    <AdminSidebar user={user} />
+  ) : (
+    <ClientSidebar user={user} />
+  );
 }

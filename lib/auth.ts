@@ -40,7 +40,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.id ?? "");
-        session.user.role = String(token.role ?? "CLIENT");
+        session.user.role = token.role === "ADMIN" ? "ADMIN" : "CLIENT";
         session.user.clientId = token.clientId ? String(token.clientId) : undefined;
       }
       return session;

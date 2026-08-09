@@ -3,11 +3,18 @@ import { prisma } from "@/lib/prisma";
 import { participantSchema } from "@/modules/growth-loop/schemas/participant";
 import { hashValue, normalizeEmail, normalizePhone, opaqueToken, referralCode } from "@/lib/security";
 import { grantReward } from "@/modules/growth-loop/domain/reward-service";
+import { notifyClient } from "@/lib/notifications";
+import {
+  publicCampaignClientIdSchema,
+  publicCampaignWhere,
+} from "@/lib/public-campaign";
 
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params; const input = participantSchema.parse(await request.json());
-    const campaign = await prisma.growthLoopCampaign.findFirst({ where: { slug, status: "ACTIVE" }, include: { rewards: { include: { ruleVersions: true } } } });
+    const requestedClientId = new URL(request.url).searchParams.get("clientId");
+    const clientId = requestedClientId ? publicCampaignClientIdSchema.parse(requestedClientId) : undefined;
+    const campaign = await prisma.growthLoopCampaign.findFirst({ where: publicCampaignWhere(slug, clientId), include: { rewards: { include: { ruleVersions: true } } } });
     if (!campaign) return NextResponse.json({ error: "Campanha indisponível" }, { status: 404 });
     const normalizedEmail = normalizeEmail(input.email);
     const existing = await prisma.participant.findUnique({ where: { campaignId_normalizedEmail: { campaignId: campaign.id, normalizedEmail } } });
@@ -21,6 +28,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     const reward = campaign.rewards.find(r => r.key === "INITIAL"); const rule = reward?.ruleVersions[0];
     if (reward && rule) await grantReward({ clientId: campaign.clientId, campaignId: campaign.id, participantId: participant.id, rewardId: reward.id, ruleVersionId: rule.id, milestone: "REGISTRATION_COMPLETED" });
     await prisma.domainEvent.create({ data: { clientId: campaign.clientId, aggregateType: "Participant", aggregateId: participant.id, eventType: "ParticipantRegistered", idempotencyKey: `participant-registered:${participant.id}`, payload: { campaignId: campaign.id } } });
+    await notifyClient({ clientId: campaign.clientId, title: "Novo lead no Growth Loop", message: `${input.name} entrou pela campanha ${campaign.name}.`, type: "GROWTH_LOOP_LEAD", link: "/dashboard/products/growth-loop" });
     return NextResponse.json({ participantId: participant.id, referralCode: participant.referralCode, accessToken }, { status: 201 });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível concluir" }, { status: 400 }); }
 }

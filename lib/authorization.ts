@@ -4,6 +4,14 @@ import { prisma } from "@/lib/prisma";
 
 export class AuthorizationError extends Error {}
 
+export async function requireAdministrator() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    throw new AuthorizationError("Acesso exclusivo para administradores");
+  }
+  return session;
+}
+
 export async function requireTenant(requestedClientId?: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new AuthorizationError("Não autenticado");
@@ -12,4 +20,12 @@ export async function requireTenant(requestedClientId?: string) {
   if (isAdmin && !clientId) clientId = (await prisma.client.findFirst({ orderBy: { createdAt: "asc" }, select: { id: true } }))?.id;
   if (!clientId) throw new AuthorizationError("Nenhuma empresa vinculada");
   return { userId: session.user.id, clientId, isAdmin, session };
+}
+
+export async function requireAdminTenant(requestedClientId?: string) {
+  const tenant = await requireTenant(requestedClientId);
+  if (!tenant.isAdmin) {
+    throw new AuthorizationError("Ação disponível somente para administradores");
+  }
+  return tenant;
 }

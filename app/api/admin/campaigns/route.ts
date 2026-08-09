@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireTenant, AuthorizationError } from "@/lib/authorization";
+import { requireAdminTenant, AuthorizationError } from "@/lib/authorization";
 import { campaignSchema } from "@/modules/growth-loop/schemas/campaign";
 
 export async function GET(request: Request) {
   try {
     const clientIdParam = new URL(request.url).searchParams.get("clientId") ?? undefined;
-    const { clientId } = await requireTenant(clientIdParam);
+    const { clientId } = await requireAdminTenant(clientIdParam);
     const campaigns = await prisma.growthLoopCampaign.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, include: { _count: { select: { participants: true, leads: true, referrals: true } } } });
     return NextResponse.json(campaigns);
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Erro" }, { status: error instanceof AuthorizationError ? 403 : 500 }); }
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const input = campaignSchema.parse(body);
-    const { clientId, userId } = await requireTenant(body.clientId);
+    const { clientId, userId } = await requireAdminTenant(body.clientId);
     const campaign = await prisma.growthLoopCampaign.create({ data: {
       clientId, createdById: userId, name: input.name, slug: input.slug, description: input.description,
       initialRewardTitle: input.initialRewardTitle, initialRewardValue: input.initialRewardValue,
