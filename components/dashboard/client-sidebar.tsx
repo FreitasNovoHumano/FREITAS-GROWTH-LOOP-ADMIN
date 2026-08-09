@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
+  BarChart3,
+  ExternalLink,
   Gift,
   LayoutDashboard,
   LogOut,
   Orbit,
   Target,
-  UserRoundPlus,
   Users,
 } from "lucide-react";
 
@@ -17,15 +18,17 @@ import { CLIENT_DASHBOARD_ROUTES } from "@/lib/client-area";
 
 const clientLinks = [
   ["Visão geral", CLIENT_DASHBOARD_ROUTES[0], LayoutDashboard],
-  ["Campanhas", CLIENT_DASHBOARD_ROUTES[1], Target],
-  ["Leads", CLIENT_DASHBOARD_ROUTES[2], UserRoundPlus],
-  ["Participantes", CLIENT_DASHBOARD_ROUTES[3], Users],
-  ["Recompensas", CLIENT_DASHBOARD_ROUTES[4], Gift],
+  ["Minha campanha", CLIENT_DASHBOARD_ROUTES[1], Target],
+  ["Participantes", CLIENT_DASHBOARD_ROUTES[2], Users],
+  ["Recompensas", CLIENT_DASHBOARD_ROUTES[3], Gift],
+  ["Relatórios", CLIENT_DASHBOARD_ROUTES[4], BarChart3],
 ] as const;
 
 export function ClientSidebar({
+  publicCampaignHref,
   user,
 }: {
+  publicCampaignHref?: string;
   user: { name: string; email: string };
 }) {
   const path = usePathname();
@@ -50,6 +53,12 @@ export function ClientSidebar({
             label={label}
           />
         ))}
+        {publicCampaignHref && (
+          <Link href={publicCampaignHref} target="_blank">
+            <ExternalLink size={19} aria-hidden="true" />
+            Página pública
+          </Link>
+        )}
       </nav>
       <Account user={user} />
     </aside>

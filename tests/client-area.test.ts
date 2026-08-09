@@ -14,23 +14,23 @@ import {
   scopeToClient,
 } from "../lib/client-area";
 
-test("cliente acessa somente as cinco áreas permitidas", () => {
+test("cliente acessa somente as áreas da própria campanha", () => {
   assert.deepEqual(CLIENT_DASHBOARD_ROUTES, [
     "/dashboard",
     "/dashboard/campaigns",
-    "/dashboard/leads",
     "/dashboard/participants",
     "/dashboard/rewards",
+    "/dashboard/reports",
   ]);
 
   for (const path of [
     "/dashboard",
     "/dashboard/campaigns",
     "/dashboard/campaigns/507f1f77bcf86cd799439011",
-    "/dashboard/leads",
     "/dashboard/participants",
     "/dashboard/participants/507f1f77bcf86cd799439011",
     "/dashboard/rewards",
+    "/dashboard/reports",
   ]) {
     assert.equal(canAccessClientDashboardPath("CLIENT", path), true);
   }
@@ -40,7 +40,9 @@ test("cliente acessa somente as cinco áreas permitidas", () => {
     "/dashboard/emails",
     "/dashboard/fraud",
     "/dashboard/settings",
-    "/dashboard/reports",
+    "/dashboard/users",
+    "/dashboard/integrations",
+    "/dashboard/leads",
     "/dashboard/campaigns/import",
     "/dashboard/participants/export",
   ]) {
@@ -63,6 +65,8 @@ test("backend bloqueia todas as rotas administrativas para o cliente", () => {
     ["PATCH", "/api/admin/campaigns/507f1f77bcf86cd799439011"],
     ["GET", "/api/admin/data/fraud"],
     ["GET", "/api/admin/settings"],
+    ["GET", "/api/admin/users"],
+    ["GET", "/api/admin/integrations"],
     ["GET", "/api/admin/export/leads"],
     ["GET", "/api/v1"],
     ["POST", "/api/v1"],

@@ -16,7 +16,7 @@ import {
   periodStart,
 } from "@/lib/client-area";
 import { getClientReport } from "@/lib/client-data";
-import { requireAdminTenant } from "@/lib/authorization";
+import { requireTenant } from "@/lib/authorization";
 
 const number = new Intl.NumberFormat("pt-BR");
 
@@ -25,7 +25,7 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const { clientId } = await requireAdminTenant();
+  const { clientId, isAdmin } = await requireTenant();
   const { period } = await searchParams;
   const parsedPeriod = periodSchema.catch("30").parse(period);
   const selectedPeriod = parsedPeriod === "custom" ? "30" : parsedPeriod;
@@ -62,12 +62,12 @@ export default async function ReportsPage({
         eyebrow="INTELIGÊNCIA DA EMPRESA"
         title="Relatórios"
         description="Acompanhe o funil e os resultados exclusivamente da sua empresa."
-        action={
+        action={isAdmin ? (
           <a className="button secondary" href="/api/admin/export/leads">
             <Download size={17} aria-hidden="true" />
             Exportar leads
           </a>
-        }
+        ) : undefined}
       />
 
       <nav className="period-filter" aria-label="Período do relatório">

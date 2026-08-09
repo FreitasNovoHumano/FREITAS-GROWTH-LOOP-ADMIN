@@ -5,6 +5,8 @@
 
 /* Área autenticada do cliente */
 :focus-visible{outline:3px solid #a989ff;outline-offset:3px}
+.dashboard-back-button{position:fixed;right:24px;bottom:24px;z-index:20;display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--purple-dark);font-size:13px;font-weight:700;box-shadow:0 10px 28px #231b3824}
+.dashboard-back-button:hover{border-color:#b8a4f5;background:var(--lavender);transform:translateY(-1px)}
 .metric-grid-six{grid-template-columns:repeat(3,1fr)}
 .period-filter{display:flex;flex-wrap:wrap;gap:8px;margin:-10px 0 22px}
 .period-filter a{border:1px solid var(--line);border-radius:999px;background:#fff;padding:8px 13px;color:var(--muted);font-size:12px;font-weight:700}

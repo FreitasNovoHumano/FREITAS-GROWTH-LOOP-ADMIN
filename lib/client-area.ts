@@ -3,9 +3,9 @@ import { z } from "zod";
 export const CLIENT_DASHBOARD_ROUTES = [
   "/dashboard",
   "/dashboard/campaigns",
-  "/dashboard/leads",
   "/dashboard/participants",
   "/dashboard/rewards",
+  "/dashboard/reports",
 ] as const;
 
 const CLIENT_DETAIL_ROUTES = [
