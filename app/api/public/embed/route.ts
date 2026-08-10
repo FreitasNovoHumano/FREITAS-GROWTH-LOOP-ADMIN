@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { resolveEmbedConfiguration } from "@/lib/embed-config";
 import { verifyPublicClientToken } from "@/lib/embed";
 import { prisma } from "@/lib/prisma";
 import { publicCampaignWhere } from "@/lib/public-campaign";
@@ -42,6 +43,14 @@ export async function GET(request: Request) {
       name: true,
       slug: true,
       primaryColor: true,
+      accentColor: true,
+      embedButtonLabel: true,
+      embedButtonIcon: true,
+      embedButtonStyle: true,
+      embedPosition: true,
+      embedDelayMs: true,
+      embedAnimation: true,
+      embedInitiallyExpanded: true,
       page: { select: { ctaLabel: true } },
     },
   });
@@ -54,13 +63,24 @@ export async function GET(request: Request) {
 
   const publicUrl = new URL(`/growth-loop/${campaign.slug}`, request.url);
   publicUrl.searchParams.set("clientId", clientId);
+  const embedConfiguration = resolveEmbedConfiguration(
+    campaign,
+    campaign.page?.ctaLabel || "Participar agora",
+  );
 
   return NextResponse.json(
     {
       name: campaign.name,
       slug: campaign.slug,
       primaryColor: campaign.primaryColor,
-      buttonLabel: campaign.page?.ctaLabel || "Participar agora",
+      accentColor: campaign.accentColor,
+      buttonLabel: embedConfiguration.embedButtonLabel,
+      buttonIcon: embedConfiguration.embedButtonIcon,
+      buttonStyle: embedConfiguration.embedButtonStyle,
+      position: embedConfiguration.embedPosition,
+      delayMs: embedConfiguration.embedDelayMs,
+      animation: embedConfiguration.embedAnimation,
+      initiallyExpanded: embedConfiguration.embedInitiallyExpanded,
       publicUrl: publicUrl.toString(),
     },
     { headers: corsHeaders },

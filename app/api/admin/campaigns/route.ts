@@ -24,6 +24,10 @@ export async function POST(request: Request) {
       initialRewardTitle: input.initialRewardTitle, initialRewardValue: input.initialRewardValue,
       milestoneRewardTitle: input.milestoneRewardTitle, milestoneRewardValue: input.milestoneRewardValue,
       qualifiedReferralGoal: input.qualifiedReferralGoal, primaryColor: input.primaryColor,
+      embedButtonLabel: input.embedButtonLabel, embedButtonIcon: input.embedButtonIcon,
+      embedButtonStyle: input.embedButtonStyle, embedPosition: input.embedPosition,
+      embedDelayMs: input.embedDelayMs, embedAnimation: input.embedAnimation,
+      embedInitiallyExpanded: input.embedInitiallyExpanded,
       page: { create: { headline: input.name, subheadline: input.description, ctaLabel: "Quero participar" } },
       ruleVersions: { create: { version: 1, qualifiedReferralGoal: input.qualifiedReferralGoal, snapshot: { qualifiedReferralGoal: input.qualifiedReferralGoal, requireEmailVerified: true, requireInitialAccess: true } } },
       rewards: { create: [

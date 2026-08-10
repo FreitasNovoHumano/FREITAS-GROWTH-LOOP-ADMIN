@@ -4,6 +4,7 @@ import { Code2, ExternalLink, Gift, Target, UserRoundPlus, Users } from "lucide-
 import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { EmbedConfigurationEditor } from "@/components/campaigns/embed-configuration-editor";
 import { EmbedScriptActions } from "@/components/campaigns/embed-script-actions";
 import { PublicLinkActions } from "@/components/campaigns/public-link-actions";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/client-area";
 import { getClientCampaignDetail } from "@/lib/client-data";
 import { requireTenant } from "@/lib/authorization";
+import { resolveEmbedConfiguration } from "@/lib/embed-config";
 import { buildEmbedSnippet, createPublicClientToken } from "@/lib/embed";
 
 function embedAppOrigin() {
@@ -84,6 +86,16 @@ export default async function CampaignDetailPage({
         <Metric label="Leads" value={campaign._count.leads} />
         <Metric label="Conversão" value={`${conversionRate}%`} />
       </section>
+
+      <EmbedConfigurationEditor
+        campaignId={campaign.id}
+        primaryColor={campaign.primaryColor}
+        accentColor={campaign.accentColor}
+        initialConfiguration={resolveEmbedConfiguration(
+          campaign,
+          campaign.page?.ctaLabel || "Participar agora",
+        )}
+      />
 
       <EmbedScriptActions
         campaignStatus={campaign.status}

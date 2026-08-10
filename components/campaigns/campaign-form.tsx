@@ -7,15 +7,30 @@ import {
   Gift,
   Link2,
   Palette,
+  Sparkles,
   Target,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { EmbedConfigurationFields } from "@/components/campaigns/embed-configuration-fields";
+import type { EmbedConfiguration } from "@/lib/embed-config";
 import { normalizeCampaignSlug } from "@/lib/slug";
 
-const initialData = {
+type CampaignFormData = EmbedConfiguration & {
+  name: string;
+  slug: string;
+  description: string;
+  initialRewardTitle: string;
+  initialRewardValue: string;
+  milestoneRewardTitle: string;
+  milestoneRewardValue: string;
+  qualifiedReferralGoal: number;
+  primaryColor: string;
+};
+
+const initialData: CampaignFormData = {
   name: "",
   slug: "",
   description: "",
@@ -25,6 +40,13 @@ const initialData = {
   milestoneRewardValue: "Sessão de 45 minutos",
   qualifiedReferralGoal: 3,
   primaryColor: "#7c3aed",
+  embedButtonLabel: "Participar agora",
+  embedButtonIcon: "none",
+  embedButtonStyle: "solid",
+  embedPosition: "bottom-right",
+  embedDelayMs: 0,
+  embedAnimation: "fade",
+  embedInitiallyExpanded: false,
 };
 
 export function CampaignForm({ publicOrigin }: { publicOrigin: string }) {
@@ -35,8 +57,19 @@ export function CampaignForm({ publicOrigin }: { publicOrigin: string }) {
   const [slugEdited, setSlugEdited] = useState(false);
   const [data, setData] = useState(initialData);
 
-  const set = (key: keyof typeof initialData, value: string | number) =>
+  function set<Key extends keyof CampaignFormData>(
+    key: Key,
+    value: CampaignFormData[Key],
+  ) {
     setData((current) => ({ ...current, [key]: value }));
+  }
+
+  function setEmbed<Key extends keyof EmbedConfiguration>(
+    key: Key,
+    value: EmbedConfiguration[Key],
+  ) {
+    setData((current) => ({ ...current, [key]: value }));
+  }
 
   const publicAddress = `${publicOrigin}/growth-loop/${data.slug || "seu-slug"}`;
 
@@ -224,6 +257,19 @@ export function CampaignForm({ publicOrigin }: { publicOrigin: string }) {
               <code>{data.primaryColor}</code>
             </span>
           </label>
+        </PageStep>
+
+        <PageStep
+          icon={<Sparkles />}
+          number="04"
+          title="Widget no site"
+          description="Defina como e quando o convite da campanha aparece para o visitante."
+        >
+          <EmbedConfigurationFields
+            value={data}
+            primaryColor={data.primaryColor}
+            onChange={setEmbed}
+          />
         </PageStep>
 
         {error && <p className="form-error">{error}</p>}

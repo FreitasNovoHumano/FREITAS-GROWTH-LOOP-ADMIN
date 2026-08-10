@@ -6,6 +6,7 @@ import {
   createPublicClientToken,
   verifyPublicClientToken,
 } from "../lib/embed";
+import { resolveEmbedConfiguration } from "../lib/embed-config";
 import { growthLoopEmbedScript } from "../lib/embed-script";
 import { publicCampaignWhere } from "../lib/public-campaign";
 
@@ -42,6 +43,47 @@ test("embed consulta somente campanha ativa e possui tratamento de erros", () =>
   });
   assert.match(growthLoopEmbedScript, /fetch\(endpoint/);
   assert.match(growthLoopEmbedScript, /growthloop:error/);
+  assert.match(growthLoopEmbedScript, /config\.buttonIcon/);
+  assert.match(growthLoopEmbedScript, /config\.buttonStyle/);
+  assert.match(growthLoopEmbedScript, /config\.position/);
+  assert.match(growthLoopEmbedScript, /config\.delayMs/);
+  assert.match(growthLoopEmbedScript, /config\.initiallyExpanded/);
+  assert.match(growthLoopEmbedScript, /window\.setTimeout/);
   assert.match(growthLoopEmbedScript, /\.catch\(/);
   assert.doesNotThrow(() => new Function(growthLoopEmbedScript));
+});
+
+test("configuração do embed preserva defaults para campanhas antigas", () => {
+  assert.deepEqual(resolveEmbedConfiguration({}, "Quero participar"), {
+    embedButtonLabel: "Quero participar",
+    embedButtonIcon: "none",
+    embedButtonStyle: "solid",
+    embedPosition: "bottom-right",
+    embedDelayMs: 0,
+    embedAnimation: "fade",
+    embedInitiallyExpanded: false,
+  });
+});
+
+test("configuração do embed aceita personalização completa", () => {
+  assert.deepEqual(
+    resolveEmbedConfiguration({
+      embedButtonLabel: "Ganhar presente",
+      embedButtonIcon: "gift",
+      embedButtonStyle: "gradient",
+      embedPosition: "bottom-left",
+      embedDelayMs: 2500,
+      embedAnimation: "pulse",
+      embedInitiallyExpanded: true,
+    }),
+    {
+      embedButtonLabel: "Ganhar presente",
+      embedButtonIcon: "gift",
+      embedButtonStyle: "gradient",
+      embedPosition: "bottom-left",
+      embedDelayMs: 2500,
+      embedAnimation: "pulse",
+      embedInitiallyExpanded: true,
+    },
+  );
 });

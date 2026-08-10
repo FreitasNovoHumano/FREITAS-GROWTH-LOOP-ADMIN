@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AuthorizationError, requireAdminTenant } from "@/lib/authorization";
+import { embedConfigurationPatchSchema } from "@/lib/embed-config";
 import { z } from "zod";
 
-const updateSchema = z.object({ status: z.enum(["DRAFT", "ACTIVE", "PAUSED", "ENDED", "ARCHIVED"]).optional(), name: z.string().min(3).max(100).optional(), description: z.string().max(500).optional() });
+const updateSchema = z
+  .object({
+    status: z
+      .enum(["DRAFT", "ACTIVE", "PAUSED", "ENDED", "ARCHIVED"])
+      .optional(),
+    name: z.string().min(3).max(100).optional(),
+    description: z.string().max(500).optional(),
+  })
+  .extend(embedConfigurationPatchSchema.shape);
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params; const input = updateSchema.parse(await request.json()); const { clientId, userId } = await requireAdminTenant();

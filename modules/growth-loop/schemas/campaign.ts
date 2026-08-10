@@ -1,4 +1,6 @@
 import { z } from "zod";
+
+import { embedConfigurationCreateSchema } from "@/lib/embed-config";
 import { normalizeCampaignSlug } from "@/lib/slug";
 
 export const campaignSchema = z.object({
@@ -22,4 +24,4 @@ export const campaignSchema = z.object({
   milestoneRewardValue: z.string().trim().max(200).optional(),
   qualifiedReferralGoal: z.coerce.number().int().min(1).max(100).default(3),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#7c3aed"),
-});
+}).extend(embedConfigurationCreateSchema.shape);
