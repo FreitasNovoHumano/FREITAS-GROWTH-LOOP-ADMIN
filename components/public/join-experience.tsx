@@ -13,6 +13,7 @@ type Campaign = {
   milestoneRewardTitle: string;
   qualifiedReferralGoal: number;
   page?: { headline: string; subheadline?: string; ctaLabel: string };
+  branding?: { brandName: string; logoUrl: string; primaryColor: string; secondaryColor: string; buttonStyle: "ROUNDED" | "PILL" | "SQUARE" };
 };
 
 export function JoinExperience({
@@ -95,11 +96,14 @@ export function JoinExperience({
   return (
     <main
       className="public-shell"
-      style={{ "--brand": campaign.primaryColor } as React.CSSProperties}
+      style={{
+        "--brand": campaign.branding?.primaryColor ?? campaign.primaryColor,
+        "--brand-radius": campaign.branding?.buttonStyle === "PILL" ? "999px" : campaign.branding?.buttonStyle === "SQUARE" ? "2px" : "10px",
+      } as React.CSSProperties}
     >
       <nav>
-        <span>
-          GROWTH <b>LOOP</b>
+        <span className="public-brand-name">
+          {campaign.branding?.logoUrl && <i aria-hidden="true" style={{ backgroundImage: `url(${campaign.branding.logoUrl})` }}/>} {campaign.branding?.brandName ?? <><span>GROWTH</span> <b>LOOP</b></>}
         </span>
         <small>por Freitas Growth AI</small>
       </nav>

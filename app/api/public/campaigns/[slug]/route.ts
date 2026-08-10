@@ -5,6 +5,7 @@ import {
   publicCampaignClientIdSchema,
   publicCampaignWhere,
 } from "@/lib/public-campaign";
+import { getBranding } from "@/modules/settings/service";
 
 export async function GET(
   request: Request,
@@ -27,6 +28,7 @@ export async function GET(
     where: publicCampaignWhere(slug, clientId?.data),
     select: {
       id: true,
+      clientId: true,
       name: true,
       slug: true,
       description: true,
@@ -43,7 +45,7 @@ export async function GET(
   });
 
   return campaign
-    ? NextResponse.json(campaign)
+    ? NextResponse.json({ ...campaign, branding: await getBranding(campaign.clientId) })
     : NextResponse.json(
         { error: "Campanha indisponível" },
         { status: 404 },

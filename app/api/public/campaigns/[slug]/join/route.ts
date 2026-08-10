@@ -28,7 +28,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     const reward = campaign.rewards.find(r => r.key === "INITIAL"); const rule = reward?.ruleVersions[0];
     if (reward && rule) await grantReward({ clientId: campaign.clientId, campaignId: campaign.id, participantId: participant.id, rewardId: reward.id, ruleVersionId: rule.id, milestone: "REGISTRATION_COMPLETED" });
     await prisma.domainEvent.create({ data: { clientId: campaign.clientId, aggregateType: "Participant", aggregateId: participant.id, eventType: "ParticipantRegistered", idempotencyKey: `participant-registered:${participant.id}`, payload: { campaignId: campaign.id } } });
-    await notifyClient({ clientId: campaign.clientId, title: "Novo lead no Growth Loop", message: `${input.name} entrou pela campanha ${campaign.name}.`, type: "GROWTH_LOOP_LEAD", link: "/dashboard/products/growth-loop" });
+    await notifyClient({ clientId: campaign.clientId, eventKey: "lead.created", title: "Novo lead no Growth Loop", message: `${input.name} entrou pela campanha ${campaign.name}.`, type: "GROWTH_LOOP_LEAD", link: "/dashboard/leads" });
     return NextResponse.json({ participantId: participant.id, referralCode: participant.referralCode, accessToken }, { status: 201 });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível concluir" }, { status: 400 }); }
 }

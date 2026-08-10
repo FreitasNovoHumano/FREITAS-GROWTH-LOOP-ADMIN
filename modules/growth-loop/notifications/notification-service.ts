@@ -8,6 +8,7 @@ import { sendEmail } from "@/modules/growth-loop/notifications/email-service";
 import { maskWhatsAppNumber, parseWhatsAppNumbers } from "@/modules/growth-loop/notifications/whatsapp-numbers";
 import { sendWhatsApp } from "@/modules/growth-loop/notifications/whatsapp-service";
 import { deliveryIdempotencyKey } from "@/modules/growth-loop/notifications/delivery-key";
+import { notifyClient } from "@/lib/notifications";
 
 type NotificationContext = {
   key: EmailTemplateKey;
@@ -190,7 +191,13 @@ export async function sendNotification(event: DomainEvent) {
     }
   }
   const failed = results.filter((result) => result.status === "failed").length;
-  if (failed) throw new Error(`${failed} entrega(s) da automação falharam`);
+  if (failed) {
+    for (const channel of ["EMAIL", "WHATSAPP"] as const) {
+      const channelFailures = results.filter((result) => result.channel === channel && result.status === "failed").length;
+      if (channelFailures) await notifyClient({ clientId: event.clientId, eventKey: channel === "EMAIL" ? "email.failed" : "whatsapp.failed", title: `Falha em ${channel === "EMAIL" ? "e-mail" : "WhatsApp"}`, message: `${channelFailures} entrega(s) falharam na automação ${event.eventType}.`, type: `AUTOMATION_${channel}_FAILED`, link: "/dashboard/emails" });
+    }
+    throw new Error(`${failed} entrega(s) da automação falharam`);
+  }
   return results;
 }
 

@@ -4,6 +4,7 @@ import { requireAdminTenant, AuthorizationError } from "@/lib/authorization";
 import { campaignSchema } from "@/modules/growth-loop/schemas/campaign";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
+import { notifyClient } from "@/lib/notifications";
 
 export async function GET(request: Request) {
   try {
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
       ]},
     }});
     await prisma.auditLog.create({ data: { clientId, campaignId: campaign.id, actorId: userId, actorType: "USER", action: "CAMPAIGN_CREATED", entityType: "Campaign", entityId: campaign.id, metadata: { name: input.name } } });
+    await notifyClient({ clientId, eventKey: "campaign.created", title: "Campanha criada", message: `${campaign.name} foi criada e está em rascunho.`, type: "CAMPAIGN_CREATED", link: `/dashboard/campaigns/${campaign.id}` });
     return NextResponse.json(campaign, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {

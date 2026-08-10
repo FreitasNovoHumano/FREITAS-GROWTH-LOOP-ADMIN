@@ -100,6 +100,12 @@ enum AutomationDeliveryStatus {
   SKIPPED
 }
 
+enum BrandButtonStyle {
+  ROUNDED
+  PILL
+  SQUARE
+}
+
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String?
@@ -120,9 +126,30 @@ model Client {
   company   String?
   users     User[]
   campaigns GrowthLoopCampaign[]
+  settings  ClientSettings?
   createdAt DateTime             @default(now())
 
   @@map("Client")
+}
+
+model ClientSettings {
+  id                       String           @id @default(auto()) @map("_id") @db.ObjectId
+  clientId                 String           @unique @db.ObjectId
+  client                   Client           @relation(fields: [clientId], references: [id])
+  brandName                String?
+  logoUrl                  String?
+  faviconUrl               String?
+  primaryColor             String           @default("#7650e8")
+  secondaryColor           String           @default("#a989ff")
+  backgroundColor          String           @default("#f7f7fb")
+  textColor                String           @default("#17151f")
+  buttonStyle              BrandButtonStyle @default(ROUNDED)
+  notificationPanelEnabled Boolean          @default(true)
+  notificationEvents       String[]
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+
+  @@map("ClientSettings")
 }
 
 model GrowthLoopCampaign {

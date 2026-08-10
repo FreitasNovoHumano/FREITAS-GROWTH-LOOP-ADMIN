@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Mail, MessageCircle, Pencil, Send, X } from "lucide-react";
+import Link from "next/link";
 
 import { PageHeader } from "@/components/dashboard/page-header";
 
@@ -41,20 +42,10 @@ type WhatsAppProvider = {
 };
 type EmailData = { provider: Provider; whatsappProvider: WhatsAppProvider; templates: Template[] };
 
-const emptyProvider: Provider = {
-  provider: "Resend",
-  configured: false,
-  senderName: "",
-  senderEmail: "",
-  credentialConfigured: false,
-  credentialSource: null,
-};
-
 export function EmailAutomationManager() {
   const [data, setData] = useState<EmailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [providerOpen, setProviderOpen] = useState(false);
   const [templateKey, setTemplateKey] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
 
@@ -87,7 +78,7 @@ export function EmailAutomationManager() {
         eyebrow="AUTOMAÇÕES"
         title="E-mails"
         description="Mensagens consistentes em cada momento do loop."
-        action={<button className="button primary" type="button" onClick={() => setProviderOpen(true)}><Send size={17} /> Configurar provedor</button>}
+        action={<Link className="button primary" href="/dashboard/settings/integrations"><Send size={17} /> Configurar provedor</Link>}
       />
 
       {loading && <div className="empty email-state">Carregando configurações de e-mail...</div>}
@@ -131,18 +122,6 @@ export function EmailAutomationManager() {
         </>
       )}
 
-      {providerOpen && (
-        <ProviderDialog
-          provider={data?.provider ?? emptyProvider}
-          whatsappProvider={data?.whatsappProvider ?? { provider: null, configured: false, apiUrl: "", instanceId: "", credentialConfigured: false, credentialSource: null }}
-          onClose={() => setProviderOpen(false)}
-          onSaved={(provider, whatsappProvider) => {
-            setData((current) => current ? { ...current, provider, whatsappProvider } : current);
-            setProviderOpen(false);
-            notify("Configuração do provedor salva com sucesso.");
-          }}
-        />
-      )}
       {activeTemplate && (
         <TemplateDialog
           template={activeTemplate}
@@ -177,73 +156,6 @@ function DialogShell({ title, description, onClose, children }: {
         {children}
       </section>
     </div>
-  );
-}
-
-function ProviderDialog({ provider, whatsappProvider, onClose, onSaved }: {
-  provider: Provider; whatsappProvider: WhatsAppProvider; onClose: () => void; onSaved: (provider: Provider, whatsappProvider: WhatsAppProvider) => void;
-}) {
-  const [form, setForm] = useState({ senderName: provider.senderName, senderEmail: provider.senderEmail, apiKey: "" });
-  const [whatsappForm, setWhatsAppForm] = useState({ provider: "generic-http", apiUrl: whatsappProvider.apiUrl, apiToken: "", instanceId: whatsappProvider.instanceId });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [testNumbers, setTestNumbers] = useState("");
-  const [testingWhatsApp, setTestingWhatsApp] = useState(false);
-  const [testFeedback, setTestFeedback] = useState("");
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault(); setSaving(true); setError("");
-    try {
-      const response = await fetch("/api/admin/emails/provider", {
-        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(form),
-      });
-      const value = await response.json() as Provider & { error?: string };
-      if (!response.ok) throw new Error(value.error ?? "Não foi possível salvar o provedor.");
-      let savedWhatsApp = whatsappProvider;
-      if (whatsappProvider.configured || whatsappForm.apiUrl || whatsappForm.apiToken) {
-        const whatsappResponse = await fetch("/api/admin/emails/whatsapp/provider", {
-          method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(whatsappForm),
-        });
-        const whatsappValue = await whatsappResponse.json() as WhatsAppProvider & { error?: string };
-        if (!whatsappResponse.ok) throw new Error(whatsappValue.error ?? "Não foi possível salvar o provider de WhatsApp.");
-        savedWhatsApp = whatsappValue;
-      }
-      onSaved(value, savedWhatsApp);
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Não foi possível salvar o provedor.");
-    } finally { setSaving(false); }
-  };
-  const testWhatsApp = async () => {
-    setTestingWhatsApp(true); setError(""); setTestFeedback("");
-    try {
-      const response = await fetch("/api/admin/emails/whatsapp/test", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ numbers: testNumbers, message: "Teste de configuração do Freitas Growth Loop." }),
-      });
-      const value = await response.json() as { results?: Array<{ status: "sent" | "failed" }>; error?: string };
-      if (!response.ok) throw new Error(value.error ?? "Não foi possível testar o WhatsApp.");
-      const sent = value.results?.filter((result) => result.status === "sent").length ?? 0;
-      const failed = value.results?.filter((result) => result.status === "failed").length ?? 0;
-      setTestFeedback(`${sent} enviado(s)${failed ? ` · ${failed} falha(s)` : ""}.`);
-    } catch (testError) {
-      setError(testError instanceof Error ? testError.message : "Não foi possível testar o WhatsApp.");
-    } finally { setTestingWhatsApp(false); }
-  };
-  return (
-    <DialogShell title="Configurar provedores" description="Configuração independente dos canais da automação." onClose={onClose}>
-      <form onSubmit={submit} className="email-form">
-        <section className="channel-form-section"><div className="channel-form-title"><Mail /><div><strong>E-mail</strong><small>Resend</small></div></div><div className="form-grid">
-            <label>Nome do remetente<input required value={form.senderName} onChange={(e) => setForm({ ...form, senderName: e.target.value })} /></label>
-            <label>E-mail do remetente<input required type="email" value={form.senderEmail} onChange={(e) => setForm({ ...form, senderEmail: e.target.value })} /></label>
-            <label className="full">API key do Resend
-              <input type="password" autoComplete="new-password" value={form.apiKey} placeholder={provider.credentialConfigured ? "•••••••••••• (manter atual)" : "re_..."} onChange={(e) => setForm({ ...form, apiKey: e.target.value })} />
-              <span className="field-help">Deixe vazio para manter a credencial atual{provider.credentialSource === "environment" ? " definida no ambiente" : ""}.</span>
-            </label>
-        </div></section>
-        <section className="channel-form-section"><div className="channel-form-title"><MessageCircle /><div><strong>WhatsApp</strong><small>{whatsappProvider.configured ? `${whatsappProvider.provider} configurado` : "Não configurado"}</small></div></div><p className="provider-env-help">A configuração é criptografada por empresa. As variáveis <code>WHATSAPP_*</code> podem ser usadas como fallback do servidor.</p><div className="form-grid"><label>Adapter<select value={whatsappForm.provider} onChange={(event) => setWhatsAppForm({ ...whatsappForm, provider: event.target.value })}><option value="generic-http">Generic HTTP</option></select></label><label>ID da instância <span className="field-help">opcional</span><input value={whatsappForm.instanceId} onChange={(event) => setWhatsAppForm({ ...whatsappForm, instanceId: event.target.value })} /></label><label className="full">URL HTTPS do provider<input type="url" value={whatsappForm.apiUrl} onChange={(event) => setWhatsAppForm({ ...whatsappForm, apiUrl: event.target.value })} placeholder="https://gateway.example.com/messages" /></label><label className="full">Token do provider<input type="password" autoComplete="new-password" value={whatsappForm.apiToken} onChange={(event) => setWhatsAppForm({ ...whatsappForm, apiToken: event.target.value })} placeholder={whatsappProvider.credentialConfigured ? "•••••••••••• (manter atual)" : "Token de acesso"} /><span className="field-help">Deixe vazio para manter a credencial atual. O token nunca retorna ao navegador.</span></label></div><label>Número(s) para teste<input value={testNumbers} onChange={(event) => setTestNumbers(event.target.value)} placeholder="5511999999999, 5521988888888" /><span className="field-help">Para vários números, separe por vírgula ou ponto e vírgula.</span></label><div className="provider-test-row"><button className="button secondary" type="button" disabled={!whatsappProvider.configured || testingWhatsApp || !testNumbers.trim()} onClick={() => void testWhatsApp()}>{testingWhatsApp ? "Enviando..." : "Enviar teste"}</button>{testFeedback && <span className="provider-test-feedback"><CheckCircle2 size={15} />{testFeedback}</span>}</div></section>
-        {error && <p className="form-error" role="alert">{error}</p>}
-        <footer><button className="button secondary" type="button" onClick={onClose} disabled={saving}>Cancelar</button><button className="button primary" type="submit" disabled={saving}>{saving ? "Salvando..." : "Salvar configuração"}</button></footer>
-      </form>
-    </DialogShell>
   );
 }
 
