@@ -88,6 +88,18 @@ enum EventStatus {
   FAILED
 }
 
+enum AutomationChannel {
+  EMAIL
+  WHATSAPP
+}
+
+enum AutomationDeliveryStatus {
+  PROCESSING
+  SENT
+  FAILED
+  SKIPPED
+}
+
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String?
@@ -249,6 +261,8 @@ model Invitation {
   inviter         Participant        @relation("Inviter", fields: [inviterId], references: [id])
   inviteeEmail    String
   normalizedEmail String
+  inviteePhone    String?
+  normalizedPhone String?
   tokenHash       String             @unique
   status          InvitationStatus   @default(SENT)
   expiresAt       DateTime
@@ -379,6 +393,26 @@ model EmailEvent {
   status        EmailEventStatus @default(QUEUED)
   error         String?
   occurredAt    DateTime         @default(now())
+}
+
+model AutomationDelivery {
+  id              String                   @id @default(auto()) @map("_id") @db.ObjectId
+  clientId        String                   @db.ObjectId
+  campaignId      String                   @db.ObjectId
+  aggregateId     String                   @db.ObjectId
+  eventType       String
+  channel         AutomationChannel
+  recipientHash   String
+  recipientMasked String
+  idempotencyKey  String                   @unique
+  providerId      String?
+  status          AutomationDeliveryStatus @default(PROCESSING)
+  error           String?
+  occurredAt      DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@index([clientId, campaignId, occurredAt])
+  @@index([clientId, status])
 }
 
 model Integration {

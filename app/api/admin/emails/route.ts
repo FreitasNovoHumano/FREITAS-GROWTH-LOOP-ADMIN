@@ -9,6 +9,7 @@ import {
   emailTemplateKeys,
   hydrateTemplate,
 } from "@/modules/growth-loop/email/templates";
+import { getWhatsAppProviderStatus } from "@/modules/growth-loop/notifications/whatsapp-provider";
 
 export async function GET() {
   try {
@@ -36,6 +37,7 @@ export async function GET() {
         name: definition.name,
         description: definition.description,
         trigger: definition.trigger,
+        supportsWhatsApp: definition.supportsWhatsApp,
         variables: definition.variables,
       };
     });
@@ -51,6 +53,7 @@ export async function GET() {
         credentialConfigured: Boolean(provider?.apiKey || process.env.RESEND_API_KEY),
         credentialSource: provider?.credentialSource ?? (process.env.RESEND_API_KEY ? "environment" : null),
       },
+      whatsappProvider: await getWhatsAppProviderStatus(clientId),
       templates,
     });
   } catch (error) {
