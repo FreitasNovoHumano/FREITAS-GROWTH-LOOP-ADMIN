@@ -2,13 +2,20 @@ export function ListFilters({
   search,
   status,
   statuses = [],
+  period,
+  dateFrom,
+  dateTo,
 }: {
   search: string;
   status?: string;
   statuses?: readonly { value: string; label: string }[];
+  period?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }) {
   return (
     <form className="toolbar" method="get">
+      {period && <input name="period" type="hidden" value={period} />}
       <label className="filter-field">
         <span>Buscar</span>
         <input
@@ -32,11 +39,11 @@ export function ListFilters({
       )}
       <label className="filter-field">
         <span>Data inicial</span>
-        <input name="dateFrom" type="date" />
+        <input defaultValue={dateFrom} name="dateFrom" type="date" />
       </label>
       <label className="filter-field">
         <span>Data final</span>
-        <input name="dateTo" type="date" />
+        <input defaultValue={dateTo} name="dateTo" type="date" />
       </label>
       <button className="button primary" type="submit">
         Aplicar filtros

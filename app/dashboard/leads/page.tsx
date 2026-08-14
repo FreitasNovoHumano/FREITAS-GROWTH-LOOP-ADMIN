@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { Pagination } from "@/components/dashboard/pagination";
 import { maskEmail, maskPhone, parseListQuery } from "@/lib/client-area";
 import { getClientLeads } from "@/lib/client-data";
+import { resolveDashboardPeriod } from "@/lib/dashboard-period";
 import { requireTenant } from "@/lib/authorization";
 
 export default async function LeadsPage({
@@ -15,6 +16,7 @@ export default async function LeadsPage({
 }) {
   const params = await searchParams;
   const query = parseListQuery(params);
+  const selection = resolveDashboardPeriod(params);
   const { clientId, isAdmin } = await requireTenant();
   const { items, total } = await getClientLeads(clientId, query);
   const exportParams = new URLSearchParams();
@@ -27,7 +29,7 @@ export default async function LeadsPage({
     <>
       <PageHeader
         eyebrow="RELACIONAMENTO"
-        title="Leads"
+        title={`Leads${selection.explicit ? `, ${selection.label}` : ""}`}
         description="Contatos gerados pelas campanhas da sua empresa, com dados minimizados."
         action={isAdmin ? (
           <a
@@ -39,7 +41,12 @@ export default async function LeadsPage({
           </a>
         ) : undefined}
       />
-      <ListFilters search={query.search} />
+      <ListFilters
+        search={query.search}
+        period={selection.explicit ? selection.period : undefined}
+        dateFrom={selection.explicit ? selection.dateFrom : undefined}
+        dateTo={selection.explicit ? selection.dateTo : undefined}
+      />
       <section className="panel table-panel">
         <div className="table-scroll">
           <table>

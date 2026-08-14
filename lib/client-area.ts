@@ -6,14 +6,13 @@ export const CLIENT_DASHBOARD_ROUTES = [
   "/dashboard/participants",
   "/dashboard/rewards",
   "/dashboard/reports",
+  "/dashboard/leads",
 ] as const;
 
 const CLIENT_DETAIL_ROUTES = [
   /^\/dashboard\/campaigns\/[a-f0-9]{24}$/i,
   /^\/dashboard\/participants\/[a-f0-9]{24}$/i,
 ] as const;
-
-export const periodSchema = z.enum(["7", "30", "90", "custom"]).default("30");
 
 export const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -41,11 +40,21 @@ export const listQuerySchema = z.object({
     z.string().trim().regex(/^[a-f0-9]{24}$/i).optional(),
   ),
   dateFrom: z.preprocess(
-    (value) => (value === "" ? undefined : value),
+    (value) =>
+      value === ""
+        ? undefined
+        : typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+          ? `${value}T00:00:00.000Z`
+          : value,
     z.coerce.date().optional(),
   ),
   dateTo: z.preprocess(
-    (value) => (value === "" ? undefined : value),
+    (value) =>
+      value === ""
+        ? undefined
+        : typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+          ? `${value}T23:59:59.999Z`
+          : value,
     z.coerce.date().optional(),
   ),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),

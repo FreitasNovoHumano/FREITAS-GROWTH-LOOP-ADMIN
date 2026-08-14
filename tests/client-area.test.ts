@@ -21,12 +21,14 @@ test("cliente acessa somente as áreas da própria campanha", () => {
     "/dashboard/participants",
     "/dashboard/rewards",
     "/dashboard/reports",
+    "/dashboard/leads",
   ]);
 
   for (const path of [
     "/dashboard",
     "/dashboard/campaigns",
     "/dashboard/campaigns/507f1f77bcf86cd799439011",
+    "/dashboard/leads",
     "/dashboard/participants",
     "/dashboard/participants/507f1f77bcf86cd799439011",
     "/dashboard/rewards",
@@ -42,7 +44,6 @@ test("cliente acessa somente as áreas da própria campanha", () => {
     "/dashboard/settings",
     "/dashboard/users",
     "/dashboard/integrations",
-    "/dashboard/leads",
     "/dashboard/campaigns/import",
     "/dashboard/participants/export",
   ]) {

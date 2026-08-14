@@ -12,6 +12,7 @@ import {
   participantProgress,
 } from "@/lib/client-area";
 import { getClientParticipants } from "@/lib/client-data";
+import { resolveDashboardPeriod } from "@/lib/dashboard-period";
 import { requireTenant } from "@/lib/authorization";
 
 const statuses = [
@@ -28,6 +29,7 @@ export default async function ParticipantsPage({
 }) {
   const params = await searchParams;
   const query = parseListQuery(params);
+  const selection = resolveDashboardPeriod(params);
   const { clientId } = await requireTenant();
   const { items, total } = await getClientParticipants(clientId, query);
 
@@ -35,13 +37,16 @@ export default async function ParticipantsPage({
     <>
       <PageHeader
         eyebrow="COMUNIDADE"
-        title="Participantes"
+        title={`Participantes${selection.explicit ? `, ${selection.label}` : ""}`}
         description="Progresso real dos participantes vinculados às suas campanhas."
       />
       <ListFilters
         search={query.search}
         status={query.status}
         statuses={statuses}
+        period={selection.explicit ? selection.period : undefined}
+        dateFrom={selection.explicit ? selection.dateFrom : undefined}
+        dateTo={selection.explicit ? selection.dateTo : undefined}
       />
       <section className="panel table-panel">
         <div className="table-scroll">

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   ArrowDown,
   CheckCircle2,
@@ -10,12 +9,15 @@ import {
 } from "lucide-react";
 
 import { PageHeader } from "@/components/dashboard/page-header";
+import { PeriodFilter } from "@/components/dashboard/period-filter";
 import {
   calculateConversionRate,
-  periodSchema,
-  periodStart,
 } from "@/lib/client-area";
 import { getClientReport } from "@/lib/client-data";
+import {
+  resolveDashboardPeriod,
+  type DashboardSearchParams,
+} from "@/lib/dashboard-period";
 import { requireTenant } from "@/lib/authorization";
 
 const number = new Intl.NumberFormat("pt-BR");
@@ -23,16 +25,11 @@ const number = new Intl.NumberFormat("pt-BR");
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<DashboardSearchParams>;
 }) {
   const { clientId, isAdmin } = await requireTenant();
-  const { period } = await searchParams;
-  const parsedPeriod = periodSchema.catch("30").parse(period);
-  const selectedPeriod = parsedPeriod === "custom" ? "30" : parsedPeriod;
-  const report = await getClientReport(
-    clientId,
-    { gte: periodStart(Number(selectedPeriod)) },
-  );
+  const selection = resolveDashboardPeriod(await searchParams);
+  const report = await getClientReport(clientId, selection.range);
   const { participants, invitations, referrals, qualified } = report.funnel;
   const steps = [
     ["Participantes", participants, 100, UserPlus],
@@ -60,7 +57,7 @@ export default async function ReportsPage({
     <>
       <PageHeader
         eyebrow="INTELIGÊNCIA DA EMPRESA"
-        title="Relatórios"
+        title={`Relatórios, ${selection.label}`}
         description="Acompanhe o funil e os resultados exclusivamente da sua empresa."
         action={isAdmin ? (
           <a className="button secondary" href="/api/admin/export/leads">
@@ -70,19 +67,9 @@ export default async function ReportsPage({
         ) : undefined}
       />
 
-      <nav className="period-filter" aria-label="Período do relatório">
-        {(["7", "30", "90"] as const).map((value) => (
-          <Link
-            className={selectedPeriod === value ? "active" : ""}
-            href={`?period=${value}`}
-            key={value}
-          >
-            Últimos {value} dias
-          </Link>
-        ))}
-      </nav>
+      <PeriodFilter selection={selection} />
 
-      <section className="panel funnel">
+      <section className="panel funnel" id="funil">
         <h2>Funil de indicação</h2>
         <p>Dados reais do período selecionado</p>
         <div>

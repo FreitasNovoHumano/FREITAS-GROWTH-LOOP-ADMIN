@@ -11,48 +11,31 @@ import {
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { PeriodFilter } from "@/components/dashboard/period-filter";
 import { StatusBadge } from "@/components/dashboard/status-badge";
-import { periodSchema, periodStart } from "@/lib/client-area";
 import { getClientOverview } from "@/lib/client-data";
+import {
+  resolveDashboardPeriod,
+  withDashboardPeriod,
+  type DashboardSearchParams,
+} from "@/lib/dashboard-period";
 import { requireTenant } from "@/lib/authorization";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    period?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }>;
+  searchParams: Promise<DashboardSearchParams>;
 }) {
   const { clientId, isAdmin } = await requireTenant();
-  const { period, dateFrom, dateTo } = await searchParams;
-  const selectedPeriod = periodSchema.catch("30").parse(period);
-  const customFrom =
-    selectedPeriod === "custom" && dateFrom
-      ? new Date(`${dateFrom}T00:00:00.000Z`)
-      : null;
-  const since =
-    customFrom && !Number.isNaN(customFrom.getTime())
-      ? customFrom
-      : periodStart(Number(selectedPeriod === "custom" ? "30" : selectedPeriod));
-  const customTo =
-    selectedPeriod === "custom" && dateTo
-      ? new Date(`${dateTo}T23:59:59.999Z`)
-      : null;
-  const data = await getClientOverview(clientId, {
-    gte: since,
-    ...(customTo && !Number.isNaN(customTo.getTime())
-      ? { lte: customTo }
-      : {}),
-  });
+  const selection = resolveDashboardPeriod(await searchParams);
+  const data = await getClientOverview(clientId, selection.range);
   const metrics = [
-    ["Campanhas ativas", data.metrics.activeCampaigns, Target],
-    ["Participantes", data.metrics.participants, Users],
-    ["Indicações realizadas", data.metrics.referrals, MousePointerClick],
-    ["Leads gerados", data.metrics.leads, UserRoundPlus],
-    ["Recompensas liberadas", data.metrics.releasedRewards, Gift],
-    ["Taxa de conversão", `${data.metrics.conversionRate}%`, BarChart3],
+    ["Campanhas ativas", data.metrics.activeCampaigns, Target, "/dashboard/campaigns?status=ACTIVE"],
+    ["Participantes", data.metrics.participants, Users, "/dashboard/participants"],
+    ["Indicações realizadas", data.metrics.referrals, MousePointerClick, "/dashboard/reports#funil"],
+    ["Leads gerados", data.metrics.leads, UserRoundPlus, "/dashboard/leads"],
+    ["Recompensas liberadas", data.metrics.releasedRewards, Gift, "/dashboard/rewards"],
+    ["Taxa de conversão", `${data.metrics.conversionRate}%`, BarChart3, "/dashboard/reports#funil"],
   ] as const;
 
   return (
@@ -67,40 +50,16 @@ export default async function DashboardPage({
         }
       />
 
-      <nav className="period-filter" aria-label="Período das métricas">
-        {(["7", "30", "90"] as const).map((value) => (
-          <Link
-            className={selectedPeriod === value ? "active" : ""}
-            href={`?period=${value}`}
-            key={value}
-          >
-            Últimos {value} dias
-          </Link>
-        ))}
-        <form method="get" className="custom-period">
-          <input type="hidden" name="period" value="custom" />
-          <label>
-            <span>De</span>
-            <input
-              type="date"
-              name="dateFrom"
-              defaultValue={dateFrom}
-              required
-            />
-          </label>
-          <label>
-            <span>Até</span>
-            <input type="date" name="dateTo" defaultValue={dateTo} required />
-          </label>
-          <button className="button secondary" type="submit">
-            Período personalizado
-          </button>
-        </form>
-      </nav>
+      <PeriodFilter selection={selection} />
 
       <section className="metric-grid metric-grid-six">
-        {metrics.map(([label, value, Icon]) => (
-          <article className="metric-card" key={label}>
+        {metrics.map(([label, value, Icon, href]) => (
+          <Link
+            aria-label={`${label}: ${value}. Ver ${label.toLowerCase()} em ${selection.label}.`}
+            className="metric-card metric-card-link"
+            href={withDashboardPeriod(href, selection)}
+            key={label}
+          >
             <div>
               <span className="metric-icon">
                 <Icon aria-hidden="true" />
@@ -108,7 +67,7 @@ export default async function DashboardPage({
             </div>
             <strong>{value}</strong>
             <p>{label}</p>
-          </article>
+          </Link>
         ))}
       </section>
 
@@ -118,7 +77,9 @@ export default async function DashboardPage({
             <h2>Campanhas recentes</h2>
             <p>Últimas campanhas atualizadas pela sua empresa</p>
           </div>
-          <Link href="/dashboard/campaigns">Ver todas</Link>
+          <Link href={withDashboardPeriod("/dashboard/campaigns", selection)}>
+            Ver todas
+          </Link>
         </div>
         {data.recentCampaigns.length === 0 ? (
           <EmptyState
@@ -147,7 +108,12 @@ export default async function DashboardPage({
                 <strong>{campaign._count.referrals}</strong>
                 <small>indicações</small>
               </span>
-              <Link href={`/dashboard/campaigns/${campaign.id}`}>
+              <Link
+                href={withDashboardPeriod(
+                  `/dashboard/campaigns/${campaign.id}`,
+                  selection,
+                )}
+              >
                 Ver campanha
               </Link>
               <StatusBadge status={campaign.status} />

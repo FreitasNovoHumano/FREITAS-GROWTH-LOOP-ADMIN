@@ -12,6 +12,7 @@ import {
   parseListQuery,
 } from "@/lib/client-area";
 import { getClientCampaigns } from "@/lib/client-data";
+import { resolveDashboardPeriod } from "@/lib/dashboard-period";
 import { requireTenant } from "@/lib/authorization";
 
 const statuses = [
@@ -29,6 +30,7 @@ export default async function CampaignsPage({
 }) {
   const params = await searchParams;
   const query = parseListQuery(params);
+  const selection = resolveDashboardPeriod(params);
   const { clientId, isAdmin } = await requireTenant();
   const { items, total } = await getClientCampaigns(clientId, query);
 
@@ -36,7 +38,7 @@ export default async function CampaignsPage({
     <>
       <PageHeader
         eyebrow="AQUISIÇÃO"
-        title="Campanhas"
+        title={`Campanhas${selection.explicit ? `, ${selection.label}` : ""}`}
         description="Acompanhe campanhas e resultados vinculados à sua empresa."
         action={
           isAdmin ? (
@@ -51,6 +53,9 @@ export default async function CampaignsPage({
         search={query.search}
         status={query.status}
         statuses={statuses}
+        period={selection.explicit ? selection.period : undefined}
+        dateFrom={selection.explicit ? selection.dateFrom : undefined}
+        dateTo={selection.explicit ? selection.dateTo : undefined}
       />
       <section className="campaign-grid">
         {items.map((campaign) => {

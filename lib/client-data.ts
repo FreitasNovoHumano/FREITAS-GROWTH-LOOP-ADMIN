@@ -33,7 +33,7 @@ export async function getClientOverview(
     endingCampaigns,
   ] = await Promise.all([
     prisma.growthLoopCampaign.count({
-      where: { clientId, status: "ACTIVE" },
+      where: { clientId, status: "ACTIVE", createdAt: scopedCreatedAt },
     }),
     prisma.participant.count({
       where: { clientId, createdAt: scopedCreatedAt },
@@ -61,16 +61,16 @@ export async function getClientOverview(
       },
     }),
     prisma.growthLoopCampaign.findMany({
-      where: { clientId },
+      where: { clientId, createdAt: scopedCreatedAt },
       orderBy: { updatedAt: "desc" },
       take: 5,
       include: {
         _count: {
           select: {
-            participants: true,
-            leads: true,
-            referrals: true,
-            invitations: true,
+            participants: { where: { createdAt: scopedCreatedAt } },
+            leads: { where: { createdAt: scopedCreatedAt } },
+            referrals: { where: { createdAt: scopedCreatedAt } },
+            invitations: { where: { createdAt: scopedCreatedAt } },
           },
         },
       },
@@ -120,7 +120,7 @@ export async function getClientOverview(
     recentEvents,
     pending: {
       rewardsAwaitingDelivery: await prisma.rewardGrant.count({
-        where: { clientId, status: "AVAILABLE" },
+        where: { clientId, status: "AVAILABLE", grantedAt: scopedCreatedAt },
       }),
       campaignsEndingSoon: endingCampaigns,
     },

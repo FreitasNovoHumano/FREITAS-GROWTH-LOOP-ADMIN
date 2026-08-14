@@ -7,6 +7,7 @@ import { Pagination } from "@/components/dashboard/pagination";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { maskEmail, parseListQuery } from "@/lib/client-area";
 import { getClientRewards } from "@/lib/client-data";
+import { resolveDashboardPeriod } from "@/lib/dashboard-period";
 import { requireTenant } from "@/lib/authorization";
 
 const statuses = [
@@ -24,6 +25,7 @@ export default async function RewardsPage({
 }) {
   const params = await searchParams;
   const query = parseListQuery(params);
+  const selection = resolveDashboardPeriod(params);
   const { clientId } = await requireTenant();
   const { items, total } = await getClientRewards(clientId, query);
 
@@ -31,13 +33,16 @@ export default async function RewardsPage({
     <>
       <PageHeader
         eyebrow="INCENTIVOS"
-        title="Recompensas"
+        title={`Recompensas${selection.explicit ? `, ${selection.label}` : ""}`}
         description="Liberações e resgates vinculados exclusivamente à sua empresa."
       />
       <ListFilters
         search={query.search}
         status={query.status}
         statuses={statuses}
+        period={selection.explicit ? selection.period : undefined}
+        dateFrom={selection.explicit ? selection.dateFrom : undefined}
+        dateTo={selection.explicit ? selection.dateTo : undefined}
       />
       <section className="panel table-panel">
         <div className="table-scroll">
