@@ -31,7 +31,7 @@ export default async function CampaignsPage({
   const params = await searchParams;
   const query = parseListQuery(params);
   const selection = resolveDashboardPeriod(params);
-  const { clientId, isAdmin } = await requireTenant();
+  const { clientId, clientName, isAdmin } = await requireTenant();
   const { items, total } = await getClientCampaigns(clientId, query);
 
   return (
@@ -39,7 +39,11 @@ export default async function CampaignsPage({
       <PageHeader
         eyebrow="AQUISIÇÃO"
         title={`Campanhas${selection.explicit ? `, ${selection.label}` : ""}`}
-        description="Acompanhe campanhas e resultados vinculados à sua empresa."
+        description={
+          isAdmin
+            ? `Cliente: ${clientName} · campanhas e resultados deste tenant.`
+            : "Acompanhe campanhas e resultados vinculados à sua empresa."
+        }
         action={
           isAdmin ? (
             <Link className="button primary" href="/dashboard/campaigns/new">
@@ -71,6 +75,7 @@ export default async function CampaignsPage({
               </div>
               <div className="campaign-content">
                 <h2>{campaign.name}</h2>
+                {isAdmin && <small>Cliente: {clientName}</small>}
                 <p>
                   {campaign.description ||
                     "Campanha de indicação Growth Loop"}

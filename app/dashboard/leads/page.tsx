@@ -17,7 +17,7 @@ export default async function LeadsPage({
   const params = await searchParams;
   const query = parseListQuery(params);
   const selection = resolveDashboardPeriod(params);
-  const { clientId, isAdmin } = await requireTenant();
+  const { clientId, clientName, isAdmin } = await requireTenant();
   const { items, total } = await getClientLeads(clientId, query);
   const exportParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -30,7 +30,11 @@ export default async function LeadsPage({
       <PageHeader
         eyebrow="RELACIONAMENTO"
         title={`Leads${selection.explicit ? `, ${selection.label}` : ""}`}
-        description="Contatos gerados pelas campanhas da sua empresa, com dados minimizados."
+        description={
+          isAdmin
+            ? `Cliente: ${clientName} · contatos gerados pelas campanhas deste tenant.`
+            : "Contatos gerados pelas campanhas da sua empresa, com dados minimizados."
+        }
         action={isAdmin ? (
           <a
             className="button secondary"
@@ -53,6 +57,7 @@ export default async function LeadsPage({
             <thead>
               <tr>
                 <th>Lead</th>
+                {isAdmin && <th>Cliente</th>}
                 <th>Contato protegido</th>
                 <th>Campanha</th>
                 <th>Origem</th>
@@ -63,6 +68,7 @@ export default async function LeadsPage({
               {items.map((lead) => (
                 <tr key={lead.id}>
                   <td>{lead.name}</td>
+                  {isAdmin && <td>{clientName}</td>}
                   <td>
                     {maskEmail(lead.email)}
                     <br />

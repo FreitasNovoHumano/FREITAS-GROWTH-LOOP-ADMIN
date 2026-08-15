@@ -26,7 +26,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<DashboardSearchParams>;
 }) {
-  const { clientId, isAdmin } = await requireTenant();
+  const { clientId, clientName, isAdmin } = await requireTenant();
   const selection = resolveDashboardPeriod(await searchParams);
   const data = await getClientOverview(clientId, selection.range);
   const metrics = [
@@ -45,7 +45,7 @@ export default async function DashboardPage({
         title={isAdmin ? "Visão geral do Growth Loop" : "Resultados da sua empresa"}
         description={
           isAdmin
-            ? "Acompanhe a operação do tenant selecionado."
+            ? `Cliente: ${clientName} · acompanhe a operação do tenant selecionado.`
             : "Métricas e atividades filtradas exclusivamente para a sua empresa."
         }
       />

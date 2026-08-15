@@ -19,7 +19,13 @@ export async function requireTenant(requestedClientId?: string) {
   let clientId = isAdmin ? requestedClientId ?? session.user.clientId : session.user.clientId;
   if (isAdmin && !clientId) clientId = (await prisma.client.findFirst({ orderBy: { createdAt: "asc" }, select: { id: true } }))?.id;
   if (!clientId) throw new AuthorizationError("Nenhuma empresa vinculada");
-  return { userId: session.user.id, clientId, isAdmin, session };
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { name: true, company: true },
+  });
+  if (!client) throw new AuthorizationError("Empresa não encontrada");
+  const clientName = client.company?.trim() || client.name;
+  return { userId: session.user.id, clientId, clientName, isAdmin, session };
 }
 
 export async function requireAdminTenant(requestedClientId?: string) {

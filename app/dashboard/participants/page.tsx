@@ -30,7 +30,7 @@ export default async function ParticipantsPage({
   const params = await searchParams;
   const query = parseListQuery(params);
   const selection = resolveDashboardPeriod(params);
-  const { clientId } = await requireTenant();
+  const { clientId, clientName, isAdmin } = await requireTenant();
   const { items, total } = await getClientParticipants(clientId, query);
 
   return (
@@ -38,7 +38,11 @@ export default async function ParticipantsPage({
       <PageHeader
         eyebrow="COMUNIDADE"
         title={`Participantes${selection.explicit ? `, ${selection.label}` : ""}`}
-        description="Progresso real dos participantes vinculados às suas campanhas."
+        description={
+          isAdmin
+            ? `Cliente: ${clientName} · participantes vinculados às campanhas deste tenant.`
+            : "Progresso real dos participantes vinculados às suas campanhas."
+        }
       />
       <ListFilters
         search={query.search}
@@ -54,6 +58,7 @@ export default async function ParticipantsPage({
             <thead>
               <tr>
                 <th>Participante</th>
+                {isAdmin && <th>Cliente</th>}
                 <th>Campanha</th>
                 <th>Indicações</th>
                 <th>Progresso</th>
@@ -80,6 +85,7 @@ export default async function ParticipantsPage({
                       <br />
                       <small>{maskEmail(participant.email)}</small>
                     </td>
+                    {isAdmin && <td>{clientName}</td>}
                     <td>{participant.campaign.name}</td>
                     <td>
                       {participant.qualifiedReferralCount} qualificadas de{" "}

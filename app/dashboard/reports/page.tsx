@@ -27,7 +27,7 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<DashboardSearchParams>;
 }) {
-  const { clientId, isAdmin } = await requireTenant();
+  const { clientId, clientName, isAdmin } = await requireTenant();
   const selection = resolveDashboardPeriod(await searchParams);
   const report = await getClientReport(clientId, selection.range);
   const { participants, invitations, referrals, qualified } = report.funnel;
@@ -58,7 +58,11 @@ export default async function ReportsPage({
       <PageHeader
         eyebrow="INTELIGÊNCIA DA EMPRESA"
         title={`Relatórios, ${selection.label}`}
-        description="Acompanhe o funil e os resultados exclusivamente da sua empresa."
+        description={
+          isAdmin
+            ? `Cliente: ${clientName} · funil e resultados deste tenant.`
+            : "Acompanhe o funil e os resultados exclusivamente da sua empresa."
+        }
         action={isAdmin ? (
           <a className="button secondary" href="/api/admin/export/leads">
             <Download size={17} aria-hidden="true" />

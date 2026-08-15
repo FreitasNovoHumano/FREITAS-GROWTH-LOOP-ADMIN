@@ -26,7 +26,7 @@ export default async function RewardsPage({
   const params = await searchParams;
   const query = parseListQuery(params);
   const selection = resolveDashboardPeriod(params);
-  const { clientId } = await requireTenant();
+  const { clientId, clientName, isAdmin } = await requireTenant();
   const { items, total } = await getClientRewards(clientId, query);
 
   return (
@@ -34,7 +34,11 @@ export default async function RewardsPage({
       <PageHeader
         eyebrow="INCENTIVOS"
         title={`Recompensas${selection.explicit ? `, ${selection.label}` : ""}`}
-        description="Liberações e resgates vinculados exclusivamente à sua empresa."
+        description={
+          isAdmin
+            ? `Cliente: ${clientName} · liberações e resgates deste tenant.`
+            : "Liberações e resgates vinculados exclusivamente à sua empresa."
+        }
       />
       <ListFilters
         search={query.search}
@@ -50,6 +54,7 @@ export default async function RewardsPage({
             <thead>
               <tr>
                 <th>Recompensa</th>
+                {isAdmin && <th>Cliente</th>}
                 <th>Campanha</th>
                 <th>Participante</th>
                 <th>Regra</th>
@@ -61,6 +66,7 @@ export default async function RewardsPage({
               {items.map((grant) => (
                 <tr key={grant.id}>
                   <td>{grant.reward.title}</td>
+                  {isAdmin && <td>{clientName}</td>}
                   <td>{grant.reward.campaign.name}</td>
                   <td>
                     {grant.participant.name}
