@@ -171,3 +171,42 @@
   .embed-configurator-footer .button{width:100%}
   .email-dialog-backdrop{align-items:end;padding:0}.email-dialog{max-height:92dvh;border-radius:18px 18px 0 0}.email-form,.email-dialog>header{padding:18px}.email-form footer{flex-direction:column-reverse}.email-form footer .button{width:100%}.email-toast{right:16px;bottom:16px;left:16px}.email-provider-grid{grid-template-columns:1fr}.email-provider-status{width:100%;border-radius:11px}.channel-form-section{padding:14px}
 }
+
+/* Normalização entre engines sem alterar a identidade clara do Growth Loop. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  color-scheme: light;
+}
+
+button,
+input,
+textarea,
+select {
+  letter-spacing: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--purple);
+}
+
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+select {
+  color-scheme: light;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  cursor: not-allowed;
+}

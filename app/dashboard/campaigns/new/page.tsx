@@ -6,7 +6,6 @@ export default async function NewCampaignPage() {
   const configuredOrigin =
     process.env.GROWTH_LOOP_NEXTAUTH_URL ??
     process.env.NEXTAUTH_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
-    "http://localhost:3001";
+    "https://freitas-growth-loop-admin.vercel.app";
   return <CampaignForm publicOrigin={new URL(configuredOrigin).origin} />;
 }

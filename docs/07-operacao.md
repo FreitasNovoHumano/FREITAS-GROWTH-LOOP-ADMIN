@@ -18,8 +18,7 @@
 | `GOOGLE_CLIENT_SECRET` | Sim | OAuth Google |
 | `ADMIN_EMAIL` | Recomendada | E-mail que recebe papel `ADMIN` ao primeiro login |
 | `GROWTH_LOOP_NEXTAUTH_URL` | Produção | URL canônica da aplicação/callback |
-| `VERCEL_URL` | Automática | Fallback de URL quando executado na Vercel |
-| `NEXTAUTH_URL` | Derivada | Definida pelo projeto a partir dos valores acima |
+| `NEXTAUTH_URL` | Derivada | Definida a partir de `GROWTH_LOOP_NEXTAUTH_URL` ou do domínio oficial |
 
 Não publique `.env`, `.env.local` ou credenciais. Esses arquivos já estão no `.gitignore`.
 
@@ -130,4 +129,3 @@ O projeto não configura logger estruturado, tracing, métricas, error tracking 
 - grants não expiram automaticamente;
 - campanhas não mudam de status com base em `startsAt`/`endsAt`;
 - não há job de retry de webhook ou e-mail.
-
