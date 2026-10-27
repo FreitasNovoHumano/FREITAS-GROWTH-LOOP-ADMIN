@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { participantSchema } from "@/modules/growth-loop/schemas/participant";
-import { hashValue, normalizeEmail, normalizePhone, opaqueToken, referralCode } from "@/lib/security";
+import { canonicalEmail, hashValue, normalizeEmail, normalizePhone, opaqueToken, referralCode } from "@/lib/security";
 import { grantReward } from "@/modules/growth-loop/domain/reward-service";
 import { notifyClient } from "@/lib/notifications";
 import {
@@ -20,9 +20,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     const existing = await prisma.participant.findUnique({ where: { campaignId_normalizedEmail: { campaignId: campaign.id, normalizedEmail } } });
     if (existing) return NextResponse.json({ error: "Este e-mail já participa da campanha" }, { status: 409 });
     const referrer = input.referralCode ? await prisma.participant.findUnique({ where: { referralCode: input.referralCode } }) : null;
-    if (referrer?.normalizedEmail === normalizedEmail) return NextResponse.json({ error: "Autorreferência não permitida" }, { status: 409 });
+    if (referrer && canonicalEmail(referrer.normalizedEmail) === canonicalEmail(normalizedEmail)) return NextResponse.json({ error: "Autorreferência não permitida" }, { status: 409 });
     const accessToken = opaqueToken();
-    const participant = await prisma.participant.create({ data: { clientId: campaign.clientId, campaignId: campaign.id, name: input.name, email: input.email, normalizedEmail, phone: input.phone, normalizedPhone: normalizePhone(input.phone), referralCode: referralCode(), accessTokenHash: hashValue(accessToken), status: "ACTIVE", registrationCompletedAt: new Date(), emailVerifiedAt: new Date(), consents: { create: [{ clientId: campaign.clientId, type: "TERMS", policyVersion: "1.0", granted: true, ipHash: hashValue(request.headers.get("x-forwarded-for") ?? "unknown"), userAgentHash: hashValue(request.headers.get("user-agent") ?? "unknown") }, { clientId: campaign.clientId, type: "PRIVACY", policyVersion: "1.0", granted: true }] } } });
+    const participant = await prisma.participant.create({ data: { clientId: campaign.clientId, campaignId: campaign.id, name: input.name, email: input.email, normalizedEmail, phone: input.phone, normalizedPhone: normalizePhone(input.phone), referralCode: referralCode(), accessTokenHash: hashValue(accessToken), status: "ACTIVE", registrationCompletedAt: new Date(), consents: { create: [{ clientId: campaign.clientId, type: "TERMS", policyVersion: "1.0", granted: true, ipHash: hashValue(request.headers.get("x-forwarded-for") ?? "unknown"), userAgentHash: hashValue(request.headers.get("user-agent") ?? "unknown") }, { clientId: campaign.clientId, type: "PRIVACY", policyVersion: "1.0", granted: true }] } } });
     await prisma.lead.upsert({ where: { campaignId_normalizedEmail: { campaignId: campaign.id, normalizedEmail } }, update: { convertedAt: new Date(), participantId: participant.id }, create: { clientId: campaign.clientId, campaignId: campaign.id, participantId: participant.id, name: input.name, email: input.email, normalizedEmail, phone: input.phone, convertedAt: new Date() } });
     if (referrer && referrer.campaignId === campaign.id) await prisma.referral.create({ data: { clientId: campaign.clientId, campaignId: campaign.id, referrerParticipantId: referrer.id, referredParticipantId: participant.id, status: "REGISTERED", registeredAt: new Date(), attributionKey: `${campaign.id}:${participant.id}`, ruleVersion: 1 } });
     const reward = campaign.rewards.find(r => r.key === "INITIAL"); const rule = reward?.ruleVersions[0];

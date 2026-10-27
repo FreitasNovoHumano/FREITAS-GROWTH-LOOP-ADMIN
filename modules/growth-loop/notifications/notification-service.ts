@@ -9,6 +9,7 @@ import { maskWhatsAppNumber, parseWhatsAppNumbers } from "@/modules/growth-loop/
 import { sendWhatsApp } from "@/modules/growth-loop/notifications/whatsapp-service";
 import { deliveryIdempotencyKey } from "@/modules/growth-loop/notifications/delivery-key";
 import { notifyClient } from "@/lib/notifications";
+import { participantAccessUrl } from "@/lib/participant-link";
 
 type NotificationContext = {
   key: EmailTemplateKey;
@@ -18,8 +19,12 @@ type NotificationContext = {
   variables: Record<string, string | number | undefined>;
 };
 
+function appBaseUrl() {
+  return process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "";
+}
+
 function publicCampaignUrl(slug: string, clientId: string, referralCode?: string) {
-  const base = process.env.NEXTAUTH_URL?.replace(/\/$/, "") ?? "";
+  const base = appBaseUrl();
   const params = new URLSearchParams({ clientId });
   if (referralCode) params.set("ref", referralCode);
   return `${base}/growth-loop/${slug}?${params}`;
@@ -42,7 +47,8 @@ async function notificationContext(event: DomainEvent): Promise<NotificationCont
         participant_name: participant.name,
         campaign_name: participant.campaign.name,
         initial_reward_title: initialReward?.title,
-        initial_reward_link: initialReward?.claimUrl ?? publicCampaignUrl(participant.campaign.slug, participant.clientId, participant.referralCode),
+        // O link confirma o e-mail e o acesso inicial antes de redirecionar para a recompensa.
+        initial_reward_link: participantAccessUrl(appBaseUrl(), participant.id),
       },
     };
   }

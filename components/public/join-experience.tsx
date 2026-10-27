@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, Gift, Share2, Sparkles, Users } from "lucide-react";
+import { Check, Copy, Gift, Mail, Share2, Sparkles, Users } from "lucide-react";
 
 type Campaign = {
   name: string;
@@ -38,6 +38,12 @@ export function JoinExperience({
     phone: "",
     consent: false,
   });
+  const [invite, setInvite] = useState({ email: "", phone: "" });
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteFeedback, setInviteFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  }>();
   const tenantQuery = clientId
     ? `?${new URLSearchParams({ clientId }).toString()}`
     : "";
@@ -67,6 +73,49 @@ export function JoinExperience({
       method: "POST",
       headers: { authorization: `Bearer ${value.accessToken}` },
     });
+  }
+
+  async function sendInvite(event: React.FormEvent) {
+    event.preventDefault();
+    if (!result) return;
+    setInviteSending(true);
+    setInviteFeedback(undefined);
+    try {
+      const email = invite.email.trim();
+      const phone = invite.phone.trim();
+      const response = await fetch(
+        `/api/public/participants/${result.participantId}/invitations`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${result.accessToken}`,
+          },
+          body: JSON.stringify({ email, ...(phone ? { phone } : {}) }),
+        },
+      );
+      const value = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(value.error || "Não foi possível enviar o convite.");
+      }
+      setInviteFeedback({
+        type: "success",
+        message: value.created
+          ? `Convite enviado para ${email}.`
+          : `${email} já havia sido convidado.`,
+      });
+      setInvite({ email: "", phone: "" });
+    } catch (inviteError) {
+      setInviteFeedback({
+        type: "error",
+        message:
+          inviteError instanceof Error
+            ? inviteError.message
+            : "Não foi possível enviar o convite.",
+      });
+    } finally {
+      setInviteSending(false);
+    }
   }
 
   if (error) {
@@ -184,6 +233,10 @@ export function JoinExperience({
           </span>
           <span className="eyebrow">VOCÊ ESTÁ NO LOOP</span>
           <h1>Primeira recompensa desbloqueada!</h1>
+          <p className="confirm-email-note">
+            Enviamos um e-mail para <strong>{form.email}</strong>. Abra o link
+            para confirmar seu endereço e acessar sua recompensa.
+          </p>
           <div className="unlocked">
             <Gift />
             <span>
@@ -199,8 +252,8 @@ export function JoinExperience({
                 Agora, convide {campaign.qualifiedReferralGoal} amigos
               </h2>
               <p>
-                Quando eles concluírem o cadastro e acessarem a primeira
-                recompensa, você recebe{" "}
+                Quando eles concluírem o cadastro e confirmarem o e-mail,
+                você recebe{" "}
                 <strong>{campaign.milestoneRewardTitle}</strong>.
               </p>
             </span>
@@ -219,6 +272,44 @@ export function JoinExperience({
           >
             <Share2 /> Compartilhar convite
           </button>
+          <form className="invite-form" onSubmit={sendInvite}>
+            <h2>
+              <Mail aria-hidden="true" /> Convidar por e-mail
+            </h2>
+            <label>
+              E-mail do amigo
+              <input
+                required
+                type="email"
+                value={invite.email}
+                onChange={(event) =>
+                  setInvite({ ...invite, email: event.target.value })
+                }
+                placeholder="amigo@empresa.com"
+              />
+            </label>
+            <label>
+              WhatsApp do amigo <span>opcional, com DDI</span>
+              <input
+                value={invite.phone}
+                onChange={(event) =>
+                  setInvite({ ...invite, phone: event.target.value })
+                }
+                placeholder="5511999999999"
+              />
+            </label>
+            <button type="submit" disabled={inviteSending}>
+              {inviteSending ? "Enviando..." : "Enviar convite"}
+            </button>
+            {inviteFeedback && (
+              <p
+                className={`invite-feedback ${inviteFeedback.type}`}
+                role={inviteFeedback.type === "error" ? "alert" : "status"}
+              >
+                {inviteFeedback.message}
+              </p>
+            )}
+          </form>
         </section>
       )}
     </main>

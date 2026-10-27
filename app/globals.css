@@ -210,3 +210,67 @@ textarea:disabled,
 select:disabled {
   cursor: not-allowed;
 }
+
+.confirm-email-note {
+  margin: -6px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.invite-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.invite-form h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+}
+
+.invite-form h2 svg {
+  width: 18px;
+  color: var(--brand);
+}
+
+.invite-form label > span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.invite-form > button {
+  border: 0;
+  border-radius: var(--brand-radius, 10px);
+  background: var(--brand);
+  color: #fff;
+  padding: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.invite-form > button:disabled {
+  opacity: 0.6;
+}
+
+.invite-feedback {
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.invite-feedback.success {
+  color: var(--green);
+  background: #e7f8ef;
+}
+
+.invite-feedback.error {
+  color: #c73c30;
+  background: #fff0ed;
+}
