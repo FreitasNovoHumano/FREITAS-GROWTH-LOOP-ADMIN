@@ -30,12 +30,12 @@ export default async function DashboardPage({
   const selection = resolveDashboardPeriod(await searchParams);
   const data = await getClientOverview(clientId, selection.range);
   const metrics = [
-    ["Campanhas ativas", data.metrics.activeCampaigns, Target, "/dashboard/campaigns?status=ACTIVE"],
-    ["Participantes", data.metrics.participants, Users, "/dashboard/participants"],
-    ["Indicações realizadas", data.metrics.referrals, MousePointerClick, "/dashboard/reports#funil"],
-    ["Leads gerados", data.metrics.leads, UserRoundPlus, "/dashboard/leads"],
-    ["Recompensas liberadas", data.metrics.releasedRewards, Gift, "/dashboard/rewards"],
-    ["Taxa de conversão", `${data.metrics.conversionRate}%`, BarChart3, "/dashboard/reports#funil"],
+    ["Campanhas ativas", data.metrics.activeCampaigns, Target, "/dashboard/campaigns?status=ACTIVE", false],
+    ["Participantes", data.metrics.participants, Users, "/dashboard/participants", true],
+    ["Indicações realizadas", data.metrics.referrals, MousePointerClick, "/dashboard/reports#funil", true],
+    ["Leads gerados", data.metrics.leads, UserRoundPlus, "/dashboard/leads", true],
+    ["Recompensas liberadas", data.metrics.releasedRewards, Gift, "/dashboard/rewards", true],
+    ["Taxa de conversão", `${data.metrics.conversionRate}%`, BarChart3, "/dashboard/reports#funil", true],
   ] as const;
 
   return (
@@ -53,11 +53,11 @@ export default async function DashboardPage({
       <PeriodFilter selection={selection} />
 
       <section className="metric-grid metric-grid-six">
-        {metrics.map(([label, value, Icon, href]) => (
+        {metrics.map(([label, value, Icon, href, scopedToPeriod]) => (
           <Link
             aria-label={`${label}: ${value}. Ver ${label.toLowerCase()} em ${selection.label}.`}
             className="metric-card metric-card-link"
-            href={withDashboardPeriod(href, selection)}
+            href={scopedToPeriod ? withDashboardPeriod(href, selection) : href}
             key={label}
           >
             <div>

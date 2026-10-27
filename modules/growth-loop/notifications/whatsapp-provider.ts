@@ -53,7 +53,17 @@ export async function getWhatsAppProviderStatus(clientId: string) {
   };
 }
 
+// Sem registro de integração vale o fallback do ambiente; integração desativada bloqueia o envio.
+export async function isWhatsAppChannelEnabled(clientId: string) {
+  const integration = await prisma.integration.findUnique({
+    where: { clientId_provider_name: { clientId, provider: "WHATSAPP", name: "DEFAULT" } },
+    select: { active: true },
+  });
+  return integration ? integration.active : true;
+}
+
 export async function getWhatsAppProvider(clientId: string): Promise<WhatsAppProvider> {
+  if (!(await isWhatsAppChannelEnabled(clientId))) throw new Error("Integração de WhatsApp desativada");
   const config = await loadWhatsAppProviderConfig(clientId);
   if (!config?.apiUrl || !config.apiToken) throw new Error("Provider de WhatsApp não configurado");
   return {

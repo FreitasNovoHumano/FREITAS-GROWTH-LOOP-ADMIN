@@ -44,7 +44,7 @@ export const listQuerySchema = z.object({
       value === ""
         ? undefined
         : typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-          ? `${value}T00:00:00.000Z`
+          ? `${value}T00:00:00.000-03:00`
           : value,
     z.coerce.date().optional(),
   ),
@@ -53,7 +53,7 @@ export const listQuerySchema = z.object({
       value === ""
         ? undefined
         : typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-          ? `${value}T23:59:59.999Z`
+          ? `${value}T23:59:59.999-03:00`
           : value,
     z.coerce.date().optional(),
   ),

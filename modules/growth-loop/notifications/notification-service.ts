@@ -4,12 +4,19 @@ import { hashValue, maskEmail } from "@/lib/security";
 import { prisma } from "@/lib/prisma";
 import { hydrateTemplate, serializeTemplate, type EmailTemplateKey } from "@/modules/growth-loop/email/templates";
 import { renderTemplate } from "@/modules/growth-loop/notifications/template-renderer";
-import { sendEmail } from "@/modules/growth-loop/notifications/email-service";
+import { isEmailChannelEnabled, sendEmail } from "@/modules/growth-loop/notifications/email-service";
 import { maskWhatsAppNumber, parseWhatsAppNumbers } from "@/modules/growth-loop/notifications/whatsapp-numbers";
 import { sendWhatsApp } from "@/modules/growth-loop/notifications/whatsapp-service";
+import { isWhatsAppChannelEnabled } from "@/modules/growth-loop/notifications/whatsapp-provider";
 import { deliveryIdempotencyKey } from "@/modules/growth-loop/notifications/delivery-key";
 import { notifyClient } from "@/lib/notifications";
 import { participantAccessUrl } from "@/lib/participant-link";
+
+// Limites do processador: evita repetição infinita e itens presos em PROCESSING.
+const MAX_ATTEMPTS = 5;
+const RETRY_BASE_DELAY_MS = 5 * 60_000;
+const PROCESSING_LEASE_MS = 15 * 60_000;
+const BATCH_TIME_BUDGET_MS = 20_000;
 
 type NotificationContext = {
   key: EmailTemplateKey;
@@ -136,8 +143,10 @@ async function claimDelivery(input: {
   } catch (error) {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") throw error;
     const existing = await prisma.automationDelivery.findUnique({ where: { idempotencyKey } });
-    if (!existing || existing.status !== "FAILED") return null;
-    const claimed = await prisma.automationDelivery.updateMany({ where: { id: existing.id, status: "FAILED" }, data: { status: "PROCESSING", error: null } });
+    if (!existing) return null;
+    const stale = existing.status === "PROCESSING" && existing.updatedAt.getTime() < Date.now() - PROCESSING_LEASE_MS;
+    if (existing.status !== "FAILED" && !stale) return null;
+    const claimed = await prisma.automationDelivery.updateMany({ where: { id: existing.id, status: existing.status, updatedAt: existing.updatedAt }, data: { status: "PROCESSING", error: null } });
     return claimed.count ? existing : null;
   }
 }
@@ -147,14 +156,14 @@ async function failDelivery(id: string, error: unknown) {
   await prisma.automationDelivery.update({ where: { id }, data: { status: "FAILED", error: message } });
 }
 
-export async function sendNotification(event: DomainEvent) {
+export async function sendNotification(event: DomainEvent, options: { notifyFailures?: boolean } = {}) {
   const context = await notificationContext(event);
   if (!context) throw new Error(`Contexto não encontrado para ${event.eventType}`);
   const stored = await prisma.emailTemplate.findFirst({ where: { clientId: event.clientId, campaignId: null, key: context.key } });
   const template = hydrateTemplate(context.key, stored);
   const results: Array<{ channel: "EMAIL" | "WHATSAPP"; recipient: string; status: "sent" | "failed" | "skipped" }> = [];
 
-  if (template.active && context.email) {
+  if (template.active && context.email && await isEmailChannelEnabled(event.clientId)) {
     const delivery = await claimDelivery({ event, campaignId: context.campaignId, channel: "EMAIL", recipient: context.email.toLowerCase(), masked: maskEmail(context.email) });
     if (!delivery) results.push({ channel: "EMAIL", recipient: maskEmail(context.email), status: "skipped" });
     else try {
@@ -175,7 +184,7 @@ export async function sendNotification(event: DomainEvent) {
     }
   }
 
-  if (template.whatsappEnabled) {
+  if (template.whatsappEnabled && await isWhatsAppChannelEnabled(event.clientId)) {
     if (!context.phones.length) {
       const delivery = await claimDelivery({ event, campaignId: context.campaignId, channel: "WHATSAPP", recipient: `missing:${event.aggregateId}`, masked: "não informado" });
       if (delivery) await prisma.automationDelivery.update({ where: { id: delivery.id }, data: { status: "SKIPPED", error: "Destinatário sem telefone cadastrado" } });
@@ -198,7 +207,7 @@ export async function sendNotification(event: DomainEvent) {
   }
   const failed = results.filter((result) => result.status === "failed").length;
   if (failed) {
-    for (const channel of ["EMAIL", "WHATSAPP"] as const) {
+    for (const channel of options.notifyFailures === false ? [] : ["EMAIL", "WHATSAPP"] as const) {
       const channelFailures = results.filter((result) => result.channel === channel && result.status === "failed").length;
       if (channelFailures) await notifyClient({ clientId: event.clientId, eventKey: channel === "EMAIL" ? "email.failed" : "whatsapp.failed", title: `Falha em ${channel === "EMAIL" ? "e-mail" : "WhatsApp"}`, message: `${channelFailures} entrega(s) falharam na automação ${event.eventType}.`, type: `AUTOMATION_${channel}_FAILED`, link: "/dashboard/emails" });
     }
@@ -208,22 +217,27 @@ export async function sendNotification(event: DomainEvent) {
 }
 
 export async function processAutomationEvents(limit = 20) {
+  const startedAt = Date.now();
+  // PROCESSING com availableAt vencido = execução anterior interrompida (lease expirado).
   const events = await prisma.domainEvent.findMany({
-    where: { eventType: { in: ["ParticipantRegistered", "InvitationCreated", "ReferralQualified", "RewardUnlocked"] }, status: { in: ["PENDING", "FAILED"] }, availableAt: { lte: new Date() } },
+    where: { eventType: { in: ["ParticipantRegistered", "InvitationCreated", "ReferralQualified", "RewardUnlocked"] }, status: { in: ["PENDING", "FAILED", "PROCESSING"] }, attempts: { lt: MAX_ATTEMPTS }, availableAt: { lte: new Date() } },
     orderBy: { createdAt: "asc" },
     take: Math.min(Math.max(limit, 1), 100),
   });
   const summary = { processed: 0, failed: 0, skipped: 0 };
   for (const event of events) {
-    const claimed = await prisma.domainEvent.updateMany({ where: { id: event.id, status: { in: ["PENDING", "FAILED"] } }, data: { status: "PROCESSING", attempts: { increment: 1 }, lastError: null } });
+    if (Date.now() - startedAt > BATCH_TIME_BUDGET_MS) break;
+    const claimed = await prisma.domainEvent.updateMany({ where: { id: event.id, status: event.status, availableAt: event.availableAt }, data: { status: "PROCESSING", attempts: { increment: 1 }, lastError: null, availableAt: new Date(Date.now() + PROCESSING_LEASE_MS) } });
     if (!claimed.count) { summary.skipped += 1; continue; }
+    const attempt = event.attempts + 1;
     try {
-      await sendNotification(event);
+      await sendNotification(event, { notifyFailures: attempt >= MAX_ATTEMPTS });
       await prisma.domainEvent.update({ where: { id: event.id }, data: { status: "COMPLETED", processedAt: new Date() } });
       summary.processed += 1;
     } catch (error) {
       const lastError = error instanceof Error ? error.message.slice(0, 500) : "Falha ao processar automação";
-      await prisma.domainEvent.update({ where: { id: event.id }, data: { status: "FAILED", lastError, availableAt: new Date(Date.now() + 5 * 60_000) } });
+      // Backoff: 5, 10, 20, 40 min. Após MAX_ATTEMPTS o evento fica FAILED e não é mais buscado.
+      await prisma.domainEvent.update({ where: { id: event.id }, data: { status: "FAILED", lastError, availableAt: new Date(Date.now() + RETRY_BASE_DELAY_MS * 2 ** (attempt - 1)) } });
       summary.failed += 1;
     }
   }

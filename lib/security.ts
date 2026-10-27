@@ -1,8 +1,14 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, createHmac, randomBytes } from "crypto";
 
 export const normalizeEmail = (value: string) => value.trim().toLowerCase();
 export const normalizePhone = (value?: string) => value?.replace(/\D/g, "") || undefined;
 export const hashValue = (value: string) => createHash("sha256").update(value).digest("hex");
+// IP com HMAC (segredo do servidor): o hash não pode ser revertido por força bruta.
+export function hashIp(ip: string) {
+  const secret = process.env.EMBED_TOKEN_SECRET ?? process.env.NEXTAUTH_SECRET;
+  return secret ? createHmac("sha256", secret).update(`ip:${ip}`).digest("hex") : hashValue(ip);
+}
+
 export const referralCode = () => randomBytes(6).toString("base64url");
 export const opaqueToken = () => randomBytes(32).toString("base64url");
 

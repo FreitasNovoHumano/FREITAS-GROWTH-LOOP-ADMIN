@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 
 import { hashValue } from "@/lib/security";
 import { prisma } from "@/lib/prisma";
-import { createInvitation } from "@/modules/growth-loop/domain/invitation-service";
+import { createInvitation, InvitationError } from "@/modules/growth-loop/domain/invitation-service";
 import { invitationSchema } from "@/modules/growth-loop/schemas/invitation";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +18,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ id: result.invitation.id, status: result.invitation.status, created: result.created }, { status: result.created ? 201 : 200 });
   } catch (error) {
     if (error instanceof ZodError) return NextResponse.json({ error: "Revise os dados do convite.", fields: error.flatten().fieldErrors }, { status: 400 });
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Não foi possível criar o convite." }, { status: 400 });
+    if (error instanceof InvitationError) return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("growth_loop_invitation_failed", error instanceof Error ? error.message : "unknown");
+    return NextResponse.json({ error: "Não foi possível criar o convite." }, { status: 500 });
   }
 }

@@ -13,6 +13,8 @@ export type DashboardSearchParams = Record<
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DASHBOARD_TIME_ZONE = "America/Sao_Paulo";
+// Brasília não tem horário de verão desde 2019: o deslocamento é fixo.
+const DASHBOARD_UTC_OFFSET = "-03:00";
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -91,8 +93,8 @@ export function resolveDashboardPeriod(
     dateTo: normalizedTo,
     label,
     range: {
-      gte: new Date(`${normalizedFrom}T00:00:00.000Z`),
-      lte: new Date(`${normalizedTo}T23:59:59.999Z`),
+      gte: new Date(`${normalizedFrom}T00:00:00.000${DASHBOARD_UTC_OFFSET}`),
+      lte: new Date(`${normalizedTo}T23:59:59.999${DASHBOARD_UTC_OFFSET}`),
     },
     query: new URLSearchParams({
       period,

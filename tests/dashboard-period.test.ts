@@ -43,8 +43,8 @@ test("período personalizado normaliza datas e cobre o dia final", () => {
 
   assert.equal(period.dateFrom, "2026-08-05");
   assert.equal(period.dateTo, "2026-08-10");
-  assert.equal(period.range.gte.toISOString(), "2026-08-05T00:00:00.000Z");
-  assert.equal(period.range.lte.toISOString(), "2026-08-10T23:59:59.999Z");
+  assert.equal(period.range.gte.toISOString(), "2026-08-05T03:00:00.000Z");
+  assert.equal(period.range.lte.toISOString(), "2026-08-11T02:59:59.999Z");
   assert.equal(period.label, "05/08/2026 a 10/08/2026");
 });
 

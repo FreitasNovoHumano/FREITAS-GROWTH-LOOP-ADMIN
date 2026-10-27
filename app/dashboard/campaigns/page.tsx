@@ -101,7 +101,7 @@ export default async function CampaignsPage({
                   <Link href={`/dashboard/campaigns/${campaign.id}`}>
                     Ver detalhes
                   </Link>
-                  <Link href={`/growth-loop/${campaign.slug}`} target="_blank">
+                  <Link href={`/growth-loop/${campaign.slug}?clientId=${clientId}`} target="_blank">
                     Abrir página pública
                   </Link>
                   {isAdmin && (

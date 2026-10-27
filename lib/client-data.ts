@@ -33,7 +33,8 @@ export async function getClientOverview(
     endingCampaigns,
   ] = await Promise.all([
     prisma.growthLoopCampaign.count({
-      where: { clientId, status: "ACTIVE", createdAt: scopedCreatedAt },
+      // Campanhas ativas agora, independentemente da data de criação.
+      where: { clientId, status: "ACTIVE" },
     }),
     prisma.participant.count({
       where: { clientId, createdAt: scopedCreatedAt },
@@ -61,7 +62,7 @@ export async function getClientOverview(
       },
     }),
     prisma.growthLoopCampaign.findMany({
-      where: { clientId, createdAt: scopedCreatedAt },
+      where: { clientId, updatedAt: scopedCreatedAt },
       orderBy: { updatedAt: "desc" },
       take: 5,
       include: {

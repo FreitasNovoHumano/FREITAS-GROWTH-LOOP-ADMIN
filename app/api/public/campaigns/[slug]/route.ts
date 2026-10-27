@@ -24,8 +24,10 @@ export async function GET(
     );
   }
 
-  const campaign = await prisma.growthLoopCampaign.findFirst({
+  // Slug é único só por empresa: sem clientId, o link só vale se houver uma única campanha.
+  const matches = await prisma.growthLoopCampaign.findMany({
     where: publicCampaignWhere(slug, clientId?.data),
+    take: 2,
     select: {
       id: true,
       clientId: true,
@@ -43,6 +45,13 @@ export async function GET(
       page: true,
     },
   });
+  if (matches.length > 1) {
+    return NextResponse.json(
+      { error: "Link incompleto. Use o link completo da campanha." },
+      { status: 409 },
+    );
+  }
+  const campaign = matches[0];
 
   return campaign
     ? NextResponse.json({ ...campaign, branding: await getBranding(campaign.clientId) })

@@ -4,17 +4,20 @@ import { queueAutomationEvent } from "@/modules/growth-loop/notifications/automa
 
 const MAX_INVITATIONS_PER_PARTICIPANT = 20;
 
+// Erros de regra de negócio, seguros para exibir ao participante.
+export class InvitationError extends Error {}
+
 export async function createInvitation(input: { inviterId: string; email: string; phone?: string }) {
   const inviter = await prisma.participant.findUnique({ where: { id: input.inviterId } });
-  if (!inviter) throw new Error("Participante não encontrado");
+  if (!inviter) throw new InvitationError("Participante não encontrado");
   const normalizedEmail = normalizeEmail(input.email);
-  if (canonicalEmail(normalizedEmail) === canonicalEmail(inviter.normalizedEmail)) throw new Error("Não é possível convidar o próprio e-mail");
+  if (canonicalEmail(normalizedEmail) === canonicalEmail(inviter.normalizedEmail)) throw new InvitationError("Não é possível convidar o próprio e-mail");
   const existing = await prisma.invitation.findUnique({
     where: { campaignId_inviterId_normalizedEmail: { campaignId: inviter.campaignId, inviterId: inviter.id, normalizedEmail } },
   });
   if (existing) return { invitation: existing, created: false };
   const sent = await prisma.invitation.count({ where: { inviterId: inviter.id } });
-  if (sent >= MAX_INVITATIONS_PER_PARTICIPANT) throw new Error("Limite de convites atingido");
+  if (sent >= MAX_INVITATIONS_PER_PARTICIPANT) throw new InvitationError("Limite de convites atingido");
 
   const invitation = await prisma.invitation.create({ data: {
     clientId: inviter.clientId,

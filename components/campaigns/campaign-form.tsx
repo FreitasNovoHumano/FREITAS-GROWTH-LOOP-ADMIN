@@ -49,7 +49,7 @@ const initialData: CampaignFormData = {
   embedInitiallyExpanded: false,
 };
 
-export function CampaignForm({ publicOrigin }: { publicOrigin: string }) {
+export function CampaignForm({ publicOrigin, clientId }: { publicOrigin: string; clientId?: string }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -71,7 +71,7 @@ export function CampaignForm({ publicOrigin }: { publicOrigin: string }) {
     setData((current) => ({ ...current, [key]: value }));
   }
 
-  const publicAddress = `${publicOrigin}/growth-loop/${data.slug || "seu-slug"}`;
+  const publicAddress = `${publicOrigin}/growth-loop/${data.slug || "seu-slug"}${clientId ? `?clientId=${clientId}` : ""}`;
 
   function updateName(name: string) {
     setData((current) => ({
