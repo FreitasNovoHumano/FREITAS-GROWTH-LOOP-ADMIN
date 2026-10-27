@@ -2,9 +2,14 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
-if (process.env.GROWTH_LOOP_NEXTAUTH_URL) {
+// Em desenvolvimento o login volta para a máquina local; em produção usa a URL oficial.
+if (process.env.NODE_ENV !== "production") {
+  process.env.NEXTAUTH_URL = process.env.GROWTH_LOOP_DEV_URL ?? "http://localhost:3001";
+} else if (process.env.GROWTH_LOOP_NEXTAUTH_URL) {
   process.env.NEXTAUTH_URL = process.env.GROWTH_LOOP_NEXTAUTH_URL;
 }
+
+const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 
 export const authOptions: NextAuthOptions = {
   pages: { signIn: "/login" },
@@ -19,14 +24,19 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       const email = user?.email ?? token.email;
       if (!email) return token;
+      const isAdminEmail = Boolean(adminEmail) && email.trim().toLowerCase() === adminEmail;
       let dbUser = await prisma.user.findUnique({ where: { email } });
       if (!dbUser) {
         dbUser = await prisma.user.create({ data: {
           email,
           name: user?.name ?? token.name ?? email,
           image: user?.image ?? token.picture ?? null,
-          role: email === process.env.ADMIN_EMAIL ? "ADMIN" : "CLIENT",
+          role: isAdminEmail ? "ADMIN" : "CLIENT",
         }});
+      }
+      // Promove o e-mail de ADMIN_EMAIL mesmo se o usuário já existia (nunca rebaixa ninguém).
+      if (isAdminEmail && dbUser.role !== "ADMIN") {
+        dbUser = await prisma.user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
       }
       if (dbUser.role === "CLIENT" && !dbUser.clientId) {
         const client = await prisma.client.findUnique({ where: { email } });

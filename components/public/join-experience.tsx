@@ -27,6 +27,8 @@ export function JoinExperience({
 }) {
   const [campaign, setCampaign] = useState<Campaign>();
   const [error, setError] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{
     participantId: string;
     referralCode: string;
@@ -53,26 +55,40 @@ export function JoinExperience({
       .then((response) => response.json())
       .then((value) =>
         value.error ? setError(value.error) : setCampaign(value),
-      );
+      )
+      .catch(() => setError("Não foi possível carregar a campanha."));
   }, [slug, tenantQuery]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const response = await fetch(
-      `/api/public/campaigns/${slug}/join${tenantQuery}`,
-      {
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const response = await fetch(
+        `/api/public/campaigns/${slug}/join${tenantQuery}`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...form, referralCode }),
+        },
+      );
+      const value = await response.json().catch(() => ({}));
+      // Erros do cadastro ficam no formulário; a página continua disponível.
+      if (!response.ok) {
+        setSubmitError(value.error || "Não foi possível concluir o cadastro. Tente novamente.");
+        return;
+      }
+      setResult(value);
+      await fetch(`/api/public/participants/${value.participantId}/reward-access`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...form, referralCode }),
-      },
-    );
-    const value = await response.json();
-    if (!response.ok) return setError(value.error);
-    setResult(value);
-    await fetch(`/api/public/participants/${value.participantId}/reward-access`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${value.accessToken}` },
-    });
+        headers: { authorization: `Bearer ${value.accessToken}` },
+      }).catch(() => undefined);
+    } catch {
+      setSubmitError("Não foi possível concluir o cadastro. Verifique sua conexão e tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function sendInvite(event: React.FormEvent) {
@@ -221,8 +237,13 @@ export function JoinExperience({
                 Li e concordo com os Termos e a Política de Privacidade.
               </span>
             </label>
-            <button disabled={!form.consent}>
-              {campaign.page?.ctaLabel || "Quero participar"}
+            {submitError && (
+              <p className="form-error" role="alert">
+                {submitError}
+              </p>
+            )}
+            <button disabled={!form.consent || submitting}>
+              {submitting ? "Enviando..." : campaign.page?.ctaLabel || "Quero participar"}
             </button>
           </form>
         </>

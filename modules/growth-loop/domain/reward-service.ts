@@ -1,11 +1,12 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export async function grantReward(input: {
   clientId: string; campaignId: string; participantId: string;
   rewardId: string; ruleVersionId: string; milestone: string;
-}) {
+}, client: Prisma.TransactionClient = prisma) {
   const idempotencyKey = [input.campaignId, input.participantId, input.rewardId, input.ruleVersionId, input.milestone].join(":");
-  return prisma.rewardGrant.upsert({
+  return client.rewardGrant.upsert({
     where: { idempotencyKey },
     update: {},
     create: { ...input, idempotencyKey, status: "AVAILABLE" },

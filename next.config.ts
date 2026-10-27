@@ -4,8 +4,10 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: path.resolve(process.cwd(), "..", ".env") });
 
-const growthLoopUrl = process.env.GROWTH_LOOP_NEXTAUTH_URL
-  ?? "https://freitas-growth-loop-admin.vercel.app";
+// Em desenvolvimento o login volta para a máquina local; em produção usa a URL oficial.
+const growthLoopUrl = process.env.NODE_ENV === "production"
+  ? process.env.GROWTH_LOOP_NEXTAUTH_URL ?? "https://freitas-growth-loop-admin.vercel.app"
+  : process.env.GROWTH_LOOP_DEV_URL ?? "http://localhost:3001";
 
 process.env.NEXTAUTH_URL = growthLoopUrl;
 

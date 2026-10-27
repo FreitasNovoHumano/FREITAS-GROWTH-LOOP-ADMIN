@@ -34,7 +34,7 @@ export default async function CampaignDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { clientId } = await requireTenant();
+  const { clientId, isAdmin } = await requireTenant();
   const result = await getClientCampaignDetail(clientId, id);
   if (!result) redirect("/dashboard/campaigns");
 
@@ -86,15 +86,17 @@ export default async function CampaignDetailPage({
         <Metric label="Conversão" value={`${conversionRate}%`} />
       </section>
 
-      <EmbedConfigurationEditor
-        campaignId={campaign.id}
-        primaryColor={campaign.primaryColor}
-        accentColor={campaign.accentColor}
-        initialConfiguration={resolveEmbedConfiguration(
-          campaign,
-          campaign.page?.ctaLabel || "Participar agora",
-        )}
-      />
+      {isAdmin && (
+        <EmbedConfigurationEditor
+          campaignId={campaign.id}
+          primaryColor={campaign.primaryColor}
+          accentColor={campaign.accentColor}
+          initialConfiguration={resolveEmbedConfiguration(
+            campaign,
+            campaign.page?.ctaLabel || "Participar agora",
+          )}
+        />
+      )}
 
       <EmbedScriptActions
         campaignStatus={campaign.status}

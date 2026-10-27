@@ -9,6 +9,7 @@ import {
   listQuerySchema,
   maskEmail,
   maskPhone,
+  parseListQuery,
   participantProgress,
   periodStart,
   scopeToClient,
@@ -126,4 +127,12 @@ test("dados pessoais são minimizados e progresso não supera 100%", () => {
   assert.equal(maskPhone("(31) 99999-1234"), "31 9****-1234");
   assert.equal(participantProgress(5, 3), 100);
   assert.equal(participantProgress(2, 3), 67);
+});
+
+test("parâmetros inválidos na URL voltam ao padrão sem quebrar a listagem", () => {
+  const query = parseListQuery({ page: "0", pageSize: "5", status: "foo", search: "ana" });
+  assert.equal(query.page, 1);
+  assert.equal(query.pageSize, 20);
+  assert.equal(query.status, "");
+  assert.equal(query.search, "ana");
 });

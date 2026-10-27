@@ -123,6 +123,10 @@ export function parseListQuery(
       Array.isArray(value) ? value[0] : value,
     ]),
   );
+  const parsed = listQuerySchema.safeParse(flat);
+  if (parsed.success) return parsed.data;
+  // Parâmetro inválido na URL volta ao valor padrão em vez de derrubar a página.
+  for (const issue of parsed.error.issues) delete flat[String(issue.path[0])];
   return listQuerySchema.parse(flat);
 }
 
