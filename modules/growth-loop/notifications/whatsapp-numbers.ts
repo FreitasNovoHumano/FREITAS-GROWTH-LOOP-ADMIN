@@ -9,10 +9,6 @@ export function parseWhatsAppNumbers(value: string | readonly string[]) {
   return [...new Set(normalized)].filter((number) => whatsappNumberSchema.test(number));
 }
 
-export function isValidWhatsAppNumber(value: string) {
-  return whatsappNumberSchema.test(value);
-}
-
 export function maskWhatsAppNumber(value: string) {
   if (value.length <= 6) return "***";
   return `${value.slice(0, 4)}***${value.slice(-4)}`;

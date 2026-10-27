@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const { clientId } = await requireAdminTenant(clientIdParam);
     const campaigns = await prisma.growthLoopCampaign.findMany({ where: { clientId }, orderBy: { createdAt: "desc" }, include: { _count: { select: { participants: true, leads: true, referrals: true } } } });
     return NextResponse.json(campaigns);
-  } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Erro" }, { status: error instanceof AuthorizationError ? 403 : 500 }); }
+  } catch (error) { return NextResponse.json({ error: error instanceof AuthorizationError ? error.message : "Não foi possível concluir a operação." }, { status: error instanceof AuthorizationError ? 403 : 500 }); }
 }
 
 export async function POST(request: Request) {
@@ -58,6 +58,6 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Erro" }, { status: error instanceof AuthorizationError ? 403 : 500 });
+    return NextResponse.json({ error: error instanceof AuthorizationError ? error.message : "Não foi possível concluir a operação." }, { status: error instanceof AuthorizationError ? 403 : 500 });
   }
 }

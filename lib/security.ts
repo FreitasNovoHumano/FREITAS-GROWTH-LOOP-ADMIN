@@ -21,6 +21,7 @@ export function canonicalEmail(value: string) {
 }
 
 export function maskEmail(email: string) {
-  const [name, domain] = email.split("@");
+  const [name = "", domain] = email.split("@");
+  if (!domain) return "***";
   return `${name.slice(0, 2)}***@${domain}`;
 }

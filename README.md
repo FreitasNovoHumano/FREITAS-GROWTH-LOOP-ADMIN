@@ -11,13 +11,14 @@ O projeto possui um fluxo funcional de ponta a ponta para:
 - publicação de página pública por `slug`;
 - cadastro de participante com consentimento;
 - criação/atualização de lead;
-- atribuição de indicação por código;
+- atribuição de indicação por código e convites por e-mail/WhatsApp na página pública;
 - liberação idempotente da recompensa inicial;
-- qualificação da indicação após o acesso à recompensa inicial;
+- confirmação de e-mail pelo link do e-mail de boas-vindas, que qualifica a indicação;
 - liberação idempotente da recompensa de marco;
-- listagem administrativa e exportação auditada de leads.
+- dashboard, relatórios, listagens com filtros/paginação e exportação auditada de leads;
+- automações de e-mail (Resend) e WhatsApp (adapter HTTP) processadas por cron externo.
 
-Algumas áreas do painel são demonstrativas ou estão apenas modeladas no banco. Consulte [Status da implementação](docs/09-status-e-evolucao.md) antes de considerar uma funcionalidade pronta para produção.
+Antifraude, webhooks, CRM e resgate de recompensa (`RewardClaim`) ainda estão apenas modelados no banco.
 
 ## Tecnologias
 
@@ -62,7 +63,17 @@ O projeto tenta carregar primeiro o arquivo `.env` do diretório pai. Arquivos `
 
 > Faça backup e revise o schema antes de executar `db:push` em um banco compartilhado.
 
+## Testes
+
+Não há script `test` no `package.json`. Para executar a suíte (Node.js `node:test`):
+
+```bash
+npx tsx --test tests/*.test.ts tests/*.test.mjs
+```
+
 ## Documentação
+
+A pasta `docs/` é mantida apenas localmente (está no `.gitignore`).
 
 1. [Visão geral e escopo](docs/01-visao-geral.md)
 2. [Arquitetura e estrutura](docs/02-arquitetura.md)

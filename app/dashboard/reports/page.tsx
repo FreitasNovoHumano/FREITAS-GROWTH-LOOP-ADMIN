@@ -64,7 +64,7 @@ export default async function ReportsPage({
             : "Acompanhe o funil e os resultados exclusivamente da sua empresa."
         }
         action={isAdmin ? (
-          <a className="button secondary" href="/api/admin/export/leads">
+          <a className="button secondary" href={`/api/admin/export/leads?${new URLSearchParams({ dateFrom: selection.dateFrom, dateTo: selection.dateTo })}`}>
             <Download size={17} aria-hidden="true" />
             Exportar leads
           </a>

@@ -37,8 +37,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     const participant = await prisma.$transaction(async (tx) => {
       const participant = await tx.participant.create({ data: { clientId: campaign.clientId, campaignId: campaign.id, name: input.name, email: input.email, normalizedEmail, phone: input.phone, normalizedPhone: normalizePhone(input.phone), referralCode: referralCode(), accessTokenHash: hashValue(accessToken), status: "ACTIVE", registrationCompletedAt: new Date(), consents: { create: [{ clientId: campaign.clientId, type: "TERMS", policyVersion: "1.0", granted: true, ipHash, userAgentHash: hashValue(request.headers.get("user-agent") ?? "unknown") }, { clientId: campaign.clientId, type: "PRIVACY", policyVersion: "1.0", granted: true }] } } });
       await tx.lead.upsert({ where: { campaignId_normalizedEmail: { campaignId: campaign.id, normalizedEmail } }, update: { convertedAt: new Date(), participantId: participant.id }, create: { clientId: campaign.clientId, campaignId: campaign.id, participantId: participant.id, name: input.name, email: input.email, normalizedEmail, phone: input.phone, convertedAt: new Date() } });
-      if (referrer && referrer.campaignId === campaign.id) await tx.referral.create({ data: { clientId: campaign.clientId, campaignId: campaign.id, referrerParticipantId: referrer.id, referredParticipantId: participant.id, status: "REGISTERED", registeredAt: new Date(), attributionKey: `${campaign.id}:${participant.id}`, ruleVersion: 1 } });
-      const reward = campaign.rewards.find(r => r.key === "INITIAL"); const rule = reward?.ruleVersions[0];
+      if (referrer && referrer.campaignId === campaign.id && referrer.status !== "BLOCKED") await tx.referral.create({ data: { clientId: campaign.clientId, campaignId: campaign.id, referrerParticipantId: referrer.id, referredParticipantId: participant.id, status: "REGISTERED", registeredAt: new Date(), attributionKey: `${campaign.id}:${participant.id}`, ruleVersion: 1 } });
+      const reward = campaign.rewards.find(r => r.key === "INITIAL"); const rule = reward?.ruleVersions.slice().sort((a, b) => b.version - a.version)[0];
       if (reward && rule) await grantReward({ clientId: campaign.clientId, campaignId: campaign.id, participantId: participant.id, rewardId: reward.id, ruleVersionId: rule.id, milestone: "REGISTRATION_COMPLETED" }, tx);
       await tx.domainEvent.create({ data: { clientId: campaign.clientId, aggregateType: "Participant", aggregateId: participant.id, eventType: "ParticipantRegistered", idempotencyKey: `participant-registered:${participant.id}`, payload: { campaignId: campaign.id } } });
       return participant;
@@ -46,7 +46,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     await notifyClient({ clientId: campaign.clientId, eventKey: "lead.created", title: "Novo lead no Growth Loop", message: `${input.name} entrou pela campanha ${campaign.name}.`, type: "GROWTH_LOOP_LEAD", link: "/dashboard/leads" });
     return NextResponse.json({ participantId: participant.id, referralCode: participant.referralCode, accessToken }, { status: 201 });
   } catch (error) {
-    if (error instanceof ZodError) return NextResponse.json({ error: "Revise os dados informados.", fields: error.flatten().fieldErrors }, { status: 400 });
+    if (error instanceof ZodError) return NextResponse.json({ error: error.issues[0]?.message ?? "Revise os dados informados.", fields: error.flatten().fieldErrors }, { status: 400 });
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return NextResponse.json({ error: "Este e-mail já participa da campanha" }, { status: 409 });
     console.error("growth_loop_join_failed", error instanceof Error ? error.message : "unknown");
     return NextResponse.json({ error: "Não foi possível concluir o cadastro. Tente novamente." }, { status: 500 });

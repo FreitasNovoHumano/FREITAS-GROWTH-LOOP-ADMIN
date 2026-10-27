@@ -14,42 +14,6 @@ export async function GET(
     const { resource } = await params;
     const { clientId } = await requireAdminTenant();
 
-    if (resource === "leads") {
-      return NextResponse.json(
-        await prisma.lead.findMany({
-          where: { clientId },
-          include: { campaign: { select: { name: true } } },
-          orderBy: { createdAt: "desc" },
-          take: 200,
-        }),
-      );
-    }
-    if (resource === "participants") {
-      return NextResponse.json(
-        await prisma.participant.findMany({
-          where: { clientId },
-          include: {
-            campaign: { select: { name: true } },
-            _count: { select: { referrals: true, grants: true } },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 200,
-        }),
-      );
-    }
-    if (resource === "rewards") {
-      return NextResponse.json(
-        await prisma.rewardGrant.findMany({
-          where: { clientId },
-          include: {
-            participant: { select: { name: true, email: true } },
-            reward: { select: { title: true, kind: true } },
-          },
-          orderBy: { grantedAt: "desc" },
-          take: 200,
-        }),
-      );
-    }
     if (resource === "fraud") {
       return NextResponse.json(
         await prisma.fraudCase.findMany({

@@ -11,6 +11,7 @@ import {
   LogOut,
   Orbit,
   Target,
+  UserRoundPlus,
   Users,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ const clientLinks = [
   ["Participantes", CLIENT_DASHBOARD_ROUTES[2], Users],
   ["Recompensas", CLIENT_DASHBOARD_ROUTES[3], Gift],
   ["Relatórios", CLIENT_DASHBOARD_ROUTES[4], BarChart3],
+  ["Leads", CLIENT_DASHBOARD_ROUTES[5], UserRoundPlus],
 ] as const;
 
 export function ClientSidebar({

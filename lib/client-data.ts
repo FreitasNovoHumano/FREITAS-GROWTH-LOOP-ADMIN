@@ -31,6 +31,7 @@ export async function getClientOverview(
     recentCampaigns,
     recentEvents,
     endingCampaigns,
+    rewardsAwaitingDelivery,
   ] = await Promise.all([
     prisma.growthLoopCampaign.count({
       // Campanhas ativas agora, independentemente da data de criação.
@@ -97,6 +98,9 @@ export async function getClientOverview(
         },
       },
     }),
+    prisma.rewardGrant.count({
+      where: { clientId, status: "AVAILABLE", grantedAt: scopedCreatedAt },
+    }),
   ]);
 
   return {
@@ -120,9 +124,7 @@ export async function getClientOverview(
     })),
     recentEvents,
     pending: {
-      rewardsAwaitingDelivery: await prisma.rewardGrant.count({
-        where: { clientId, status: "AVAILABLE", grantedAt: scopedCreatedAt },
-      }),
+      rewardsAwaitingDelivery,
       campaignsEndingSoon: endingCampaigns,
     },
   };
