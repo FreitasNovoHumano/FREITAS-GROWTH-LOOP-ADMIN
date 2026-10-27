@@ -453,6 +453,8 @@ model Integration {
   updatedAt       DateTime @updatedAt
 
   @@unique([clientId, provider, name])
+  // Coleção própria: a coleção "Integration" pertence ao app principal (ManyChat).
+  @@map("GrowthLoopIntegration")
 }
 
 model WebhookEndpoint {

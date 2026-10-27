@@ -1,5 +1,17 @@
 import { prisma } from "@/lib/prisma";
 
+// As notificações ficam na coleção compartilhada e aparecem também no app principal:
+// links relativos apontariam para rotas que só existem no Growth Loop.
+function absoluteLoopLink(link: string) {
+  if (!link.startsWith("/")) return link;
+  const base = (
+    process.env.GROWTH_LOOP_NEXTAUTH_URL ??
+    process.env.NEXTAUTH_URL ??
+    "https://freitas-growth-loop-admin.vercel.app"
+  ).replace(/\/$/, "");
+  return `${base}${link}`;
+}
+
 export async function notifyClient(input: {
   clientId: string;
   eventKey?: string;
@@ -28,7 +40,7 @@ export async function notifyClient(input: {
         title: input.title,
         message: input.message,
         type: input.type,
-        link: input.link,
+        link: absoluteLoopLink(input.link),
       })),
     });
   } catch (error) {
