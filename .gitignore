@@ -10,3 +10,4 @@ npm-debug.log*
 .vercel/
 .adminjs/
 node_modules/
+.docs/
